@@ -673,8 +673,12 @@ app.get('/test', (req, res) => {
 });
 
 // Serve static files (CSS, JS, images, videos, etc.) - after all route handlers
+// IMPORTANT: This must come AFTER all app.get() routes
 // Route handlers (app.get) are matched before app.use middleware, so HTML routes will be handled first
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), {
+    dotfiles: 'ignore',
+    index: false // Don't serve index.html as directory index, let our route handle it
+}));
 
 // 404 handler - must be last
 app.use((req, res) => {
@@ -712,16 +716,15 @@ app.use((req, res) => {
     }
 });
 
-// Start server with error handling
-try {
-    // Log startup info safely
-    console.log(`🚀 Starting server...`);
-    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📁 Working directory: ${__dirname}`);
-    console.log(`🔌 Port: ${PORT}`);
-    console.log(`🌐 Host: ${HOST}`);
-    
-    // Safely check for files
+// Start server - MUST be at the end and MUST always succeed
+console.log('🚀 Starting Phonix Printer server...');
+console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`📁 Working directory: ${__dirname}`);
+console.log(`🔌 Port: ${PORT}`);
+console.log(`🌐 Host: ${HOST}`);
+
+// Safely check for files (don't crash if this fails)
+setTimeout(() => {
     try {
         const files = fs.readdirSync(__dirname);
         const htmlFiles = files.filter(f => f.endsWith('.html'));
@@ -730,36 +733,41 @@ try {
     } catch (err) {
         console.warn(`⚠️  Could not read directory: ${err.message}`);
     }
-    
-    // Check uploads directory
-    try {
-        console.log(`📁 Uploads directory: ${fs.existsSync('uploads') ? 'OK' : 'NOT FOUND (will be created if needed)'}`);
-    } catch (err) {
-        console.warn(`⚠️  Could not check uploads directory: ${err.message}`);
-    }
-    
-    console.log(`🤖 Telegram Bot: ${TELEGRAM_BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
-    
-    // Start the server
-    const server = app.listen(PORT, HOST, () => {
+}, 100);
+
+// Start the server - this MUST succeed
+let server;
+try {
+    server = app.listen(PORT, HOST, () => {
         console.log(`✅ Server is running on http://${HOST}:${PORT}`);
         console.log(`💡 Test endpoint: http://${HOST}:${PORT}/test`);
         console.log(`💡 Health check: http://${HOST}:${PORT}/api/health`);
-        console.log(`💡 Make sure to send a message to your Telegram bot first to get the chat ID!`);
+        console.log(`💡 Home page: http://${HOST}:${PORT}/`);
     });
-    
-    // Handle server errors
-    server.on('error', (error) => {
-        console.error('❌ Server error:', error);
-        if (error.code === 'EADDRINUSE') {
-            console.error(`❌ Port ${PORT} is already in use`);
-        }
-    });
-    
 } catch (error) {
     console.error('❌ Failed to start server:', error);
-    console.error('❌ Error stack:', error.stack);
     process.exit(1);
 }
+
+// Handle server errors
+server.on('error', (error) => {
+    console.error('❌ Server error:', error);
+    if (error.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use`);
+    } else {
+        console.error('❌ Server error details:', error.message);
+    }
+});
+
+// Handle uncaught errors gracefully
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    // Don't exit - keep server running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit - keep server running
+});
 
 
