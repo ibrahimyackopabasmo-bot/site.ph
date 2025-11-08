@@ -22,6 +22,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsContent = document.getElementById('resultsContent');
     const noResults = document.getElementById('noResults');
     const searchNameInput = document.getElementById('searchName');
+    const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+    const sheetDataTable = document.getElementById('sheetDataTable');
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+    const toggleTableBtn = document.getElementById('toggleTableBtn');
+    
+    // Store all names for autocomplete
+    let allNames = [];
+    let tableVisible = false;
 
     // Load sheet data on page load
     // Show loading indicator initially
@@ -44,17 +53,194 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Also allow search on Enter key in the input field
+    // Autocomplete functionality - show suggestions as user types
     if (searchNameInput) {
-        searchNameInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        let autocompleteTimeout;
+        
+        searchNameInput.addEventListener('input', function(e) {
+            const value = e.target.value.trim();
+            
+            // Clear previous timeout
+            clearTimeout(autocompleteTimeout);
+            
+            // Hide dropdown if input is empty
+            if (!value || value.length < 1) {
+                hideAutocomplete();
+                return;
+            }
+            
+            // Debounce autocomplete search
+            autocompleteTimeout = setTimeout(function() {
+                showAutocompleteSuggestions(value);
+            }, 300);
+        });
+        
+        // Handle keyboard navigation in autocomplete
+        searchNameInput.addEventListener('keydown', function(e) {
+            const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+            const activeItem = autocompleteDropdown.querySelector('.autocomplete-item.active');
+            
+            if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                const searchName = searchNameInput.value.trim();
-                if (searchName) {
-                    performSearch(searchName, false);
+                if (activeItem) {
+                    activeItem.classList.remove('active');
+                    const next = activeItem.nextElementSibling;
+                    if (next) {
+                        next.classList.add('active');
+                    } else {
+                        items[0]?.classList.add('active');
+                    }
+                } else {
+                    items[0]?.classList.add('active');
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (activeItem) {
+                    activeItem.classList.remove('active');
+                    const prev = activeItem.previousElementSibling;
+                    if (prev) {
+                        prev.classList.add('active');
+                    } else {
+                        items[items.length - 1]?.classList.add('active');
+                    }
+                } else {
+                    items[items.length - 1]?.classList.add('active');
+                }
+            } else if (e.key === 'Enter') {
+                if (activeItem) {
+                    e.preventDefault();
+                    searchNameInput.value = activeItem.textContent.trim();
+                    hideAutocomplete();
+                    performSearch(searchNameInput.value.trim(), false);
+                } else {
+                    e.preventDefault();
+                    const searchName = searchNameInput.value.trim();
+                    if (searchName) {
+                        performSearch(searchName, false);
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                hideAutocomplete();
+            }
+        });
+        
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (autocompleteDropdown && autocompleteDropdown.style.display !== 'none') {
+                if (!searchNameInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                    hideAutocomplete();
                 }
             }
         });
+    }
+    
+    // Toggle sheet data table visibility
+    if (toggleTableBtn) {
+        toggleTableBtn.addEventListener('click', function() {
+            if (sheetDataTable) {
+                tableVisible = !tableVisible;
+                if (tableVisible) {
+                    sheetDataTable.style.display = 'block';
+                    toggleTableBtn.textContent = 'إخفاء الجدول';
+                } else {
+                    sheetDataTable.style.display = 'none';
+                    toggleTableBtn.textContent = 'عرض الجدول';
+                }
+            }
+        });
+    }
+    
+    // Function to show autocomplete suggestions
+    function showAutocompleteSuggestions(searchTerm) {
+        if (!sheetData || !allNames.length) {
+            hideAutocomplete();
+            return;
+        }
+        
+        const normalizedSearch = searchTerm.toLowerCase().trim();
+        const matches = allNames.filter(name => {
+            const normalizedName = name.toLowerCase();
+            return normalizedName.includes(normalizedSearch) || normalizedSearch.includes(normalizedName);
+        }).slice(0, 10); // Limit to 10 suggestions
+        
+        if (matches.length === 0) {
+            hideAutocomplete();
+            return;
+        }
+        
+        let html = '';
+        matches.forEach((name, index) => {
+            html += `<div class="autocomplete-item" data-index="${index}">${escapeHtml(name)}</div>`;
+        });
+        
+        autocompleteDropdown.innerHTML = html;
+        autocompleteDropdown.style.display = 'block';
+        
+        // Add click handlers to autocomplete items
+        autocompleteDropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', function() {
+                searchNameInput.value = this.textContent.trim();
+                hideAutocomplete();
+                performSearch(searchNameInput.value.trim(), false);
+            });
+            
+            item.addEventListener('mouseenter', function() {
+                autocompleteDropdown.querySelectorAll('.autocomplete-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    }
+    
+    // Function to hide autocomplete
+    function hideAutocomplete() {
+        if (autocompleteDropdown) {
+            autocompleteDropdown.style.display = 'none';
+            autocompleteDropdown.innerHTML = '';
+        }
+    }
+    
+    // Function to extract all names from sheet data for autocomplete
+    function extractAllNames() {
+        if (!sheetData || !sheetData.table || !sheetData.table.rows) {
+            allNames = [];
+            return;
+        }
+        
+        const rows = sheetData.table.rows;
+        const namesSet = new Set();
+        
+        // Find header row
+        let dataStartIndex = 10; // Default start
+        for (let i = 0; i < Math.min(20, rows.length); i++) {
+            const row = rows[i];
+            if (row && row.c && row.c.length > 0) {
+                const firstCell = row.c[0];
+                if (firstCell && firstCell.v !== null && firstCell.v !== undefined) {
+                    const cellValue = String(firstCell.v).trim();
+                    if (cellValue === 'الاسم' || cellValue.includes('الاسم')) {
+                        dataStartIndex = i + 1;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Extract names from data rows
+        for (let i = dataStartIndex; i < rows.length; i++) {
+            const row = rows[i];
+            if (row && row.c && row.c.length > 0) {
+                const nameCell = row.c[0];
+                if (nameCell && nameCell.v !== null && nameCell.v !== undefined) {
+                    const name = String(nameCell.v).trim();
+                    if (name && name.length >= 2) {
+                        namesSet.add(name);
+                    }
+                }
+            }
+        }
+        
+        allNames = Array.from(namesSet).sort();
+        console.log('Extracted names for autocomplete:', allNames.length);
     }
 
     // Manual refresh button
@@ -111,6 +297,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Store the data globally
                 sheetData = data;
+                
+                // Extract all names for autocomplete
+                extractAllNames();
+                
+                // Display full sheet data table (but keep it hidden by default)
+                displaySheetDataTable();
+                // Hide table by default initially
+                if (sheetDataTable) {
+                    sheetDataTable.style.display = 'none';
+                }
+                if (toggleTableBtn) {
+                    toggleTableBtn.textContent = 'عرض الجدول';
+                }
                 
                 // Update status
                 const now = new Date();
@@ -422,6 +621,119 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Function to display full sheet data in a table
+    function displaySheetDataTable() {
+        if (!sheetData || !sheetData.table || !sheetData.table.rows) {
+            if (sheetDataTable) sheetDataTable.style.display = 'none';
+            return;
+        }
+        
+        const rows = sheetData.table.rows;
+        
+        // Find header row
+        let headerRowIndex = -1;
+        let dataStartIndex = 10;
+        const columnHeaders = {};
+        
+        for (let i = 0; i < Math.min(20, rows.length); i++) {
+            const row = rows[i];
+            if (row && row.c && row.c.length > 0) {
+                const firstCell = row.c[0];
+                if (firstCell && firstCell.v !== null && firstCell.v !== undefined) {
+                    const cellValue = String(firstCell.v).trim();
+                    if (cellValue === 'الاسم' || cellValue.includes('الاسم')) {
+                        headerRowIndex = i;
+                        dataStartIndex = i + 1;
+                        
+                        // Extract headers
+                        row.c.forEach((cell, idx) => {
+                            if (cell && cell.v !== null && cell.v !== undefined) {
+                                columnHeaders[idx] = String(cell.v).trim();
+                            } else {
+                                columnHeaders[idx] = `العمود ${idx + 1}`;
+                            }
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If no header found, use defaults
+        if (headerRowIndex === -1) {
+            columnHeaders[0] = 'الاسم';
+            columnHeaders[1] = 'المرحلة';
+            columnHeaders[2] = 'الشعبة';
+            columnHeaders[3] = 'التاريخ';
+            columnHeaders[4] = 'نوع الورق';
+            columnHeaders[5] = 'السعر';
+        }
+        
+        // Build table header
+        let headerHtml = '<tr>';
+        Object.keys(columnHeaders).forEach(key => {
+            headerHtml += `<th>${escapeHtml(columnHeaders[key])}</th>`;
+        });
+        headerHtml += '</tr>';
+        
+        if (tableHeader) {
+            tableHeader.innerHTML = headerHtml;
+        }
+        
+        // Build table body (limit to first 100 rows for performance)
+        let bodyHtml = '';
+        const maxRows = Math.min(dataStartIndex + 100, rows.length);
+        let rowCount = 0;
+        
+        for (let i = dataStartIndex; i < maxRows; i++) {
+            const row = rows[i];
+            if (!row || !row.c || row.c.length === 0) continue;
+            
+            // Skip if first cell (name) is empty
+            const nameCell = row.c[0];
+            if (!nameCell || nameCell.v === null || nameCell.v === undefined || String(nameCell.v).trim().length < 2) {
+                continue;
+            }
+            
+            bodyHtml += '<tr>';
+            Object.keys(columnHeaders).forEach(key => {
+                const cell = row.c[parseInt(key)];
+                let cellValue = '';
+                if (cell && cell.v !== null && cell.v !== undefined) {
+                    cellValue = String(cell.v).trim();
+                }
+                bodyHtml += `<td>${escapeHtml(cellValue)}</td>`;
+            });
+            bodyHtml += '</tr>';
+            rowCount++;
+        }
+        
+        if (tableBody) {
+            tableBody.innerHTML = bodyHtml;
+        }
+        
+        // Show table if we have data (but respect toggle state)
+        if (sheetDataTable && rowCount > 0) {
+            // Only show if table was previously visible, otherwise keep it hidden
+            if (tableVisible) {
+                sheetDataTable.style.display = 'block';
+            } else {
+                sheetDataTable.style.display = 'none';
+            }
+            // Enable toggle button
+            if (toggleTableBtn) {
+                toggleTableBtn.disabled = false;
+                toggleTableBtn.textContent = tableVisible ? 'إخفاء الجدول' : 'عرض الجدول';
+            }
+        } else {
+            sheetDataTable.style.display = 'none';
+            if (toggleTableBtn) {
+                toggleTableBtn.disabled = true;
+                toggleTableBtn.textContent = 'لا توجد بيانات';
+            }
+        }
     }
 
     // Cleanup on page unload

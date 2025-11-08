@@ -57,14 +57,17 @@
                     <form id="searchForm" class="search-form">
                         <div class="form-group">
                             <label for="searchName">الاسم الكامل</label>
-                            <input 
-                                type="text" 
-                                id="searchName" 
-                                name="searchName" 
-                                placeholder="أدخل الاسم الكامل للبحث..." 
-                                required
-                                autocomplete="off"
-                            >
+                            <div class="autocomplete-wrapper">
+                                <input 
+                                    type="text" 
+                                    id="searchName" 
+                                    name="searchName" 
+                                    placeholder="أدخل الاسم الكامل للبحث..." 
+                                    required
+                                    autocomplete="off"
+                                >
+                                <div id="autocompleteDropdown" class="autocomplete-dropdown" style="display: none;"></div>
+                            </div>
                         </div>
                         <button type="submit" class="btn-primary" id="searchBtn">
                             <span id="searchBtnText">بحث</span>
@@ -79,7 +82,10 @@
                     <span id="refreshStatus">جاهز للبحث</span>
                     <span id="lastUpdate" class="last-update"></span>
                 </div>
-                <button id="refreshBtn" class="btn-secondary">تحديث البيانات</button>
+                <div class="control-buttons">
+                    <button id="toggleTableBtn" class="btn-secondary" style="margin-left: 0.5rem;">عرض/إخفاء الجدول</button>
+                    <button id="refreshBtn" class="btn-secondary">تحديث البيانات</button>
+                </div>
             </div>
             
             <div id="loadingIndicator" class="loading-indicator" style="display: block;">
@@ -99,6 +105,21 @@
             <div id="noResults" class="no-results" style="display: none;">
                 <p>❌ لم يتم العثور على نتائج للاسم المطلوب</p>
                 <p class="no-results-hint">يرجى التحقق من الاسم والمحاولة مرة أخرى</p>
+            </div>
+
+            <!-- Sheet Data Table Display -->
+            <div id="sheetDataTable" class="sheet-data-table" style="display: none;">
+                <h3 class="results-title">بيانات الجدول</h3>
+                <div class="discussion-table-container">
+                    <table class="discussion-table" id="dataTable">
+                        <thead id="tableHeader">
+                            <!-- Table headers will be inserted here -->
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Table rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </section>

@@ -198,74 +198,202 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
 });
 
-// Google Sheets proxy endpoint to avoid CORS issues
+// Google Sheets API Configuration - Load from config file
+let GOOGLE_SHEETS_CONFIG = {
+    apiKey: process.env.GOOGLE_SHEETS_API_KEY || 'AIzaSyCpjjMg8fZ3YvUS_Qd5ZckOMLoJE_P4kls',
+    sheetId: '1hfYLHn6peQLywoNpzVUbgrhI5w-y1xuckuGcbt2a0Ew',
+    email: '',
+    sheetName: 'Sheet1',
+    authMethod: 'apiKey',
+    serviceAccountFile: 'kay.json'
+};
+
+// Try to load configuration from file
+try {
+    const configPath = path.join(__dirname, 'google-sheets-config.json');
+    if (fs.existsSync(configPath)) {
+        const configFile = fs.readFileSync(configPath, 'utf8');
+        const fileConfig = JSON.parse(configFile);
+        GOOGLE_SHEETS_CONFIG = { ...GOOGLE_SHEETS_CONFIG, ...fileConfig };
+        console.log('✅ Loaded Google Sheets configuration from google-sheets-config.json');
+        console.log(`   Sheet ID: ${GOOGLE_SHEETS_CONFIG.sheetId}`);
+        console.log(`   Auth Method: ${GOOGLE_SHEETS_CONFIG.authMethod}`);
+        console.log(`   Email: ${GOOGLE_SHEETS_CONFIG.email}`);
+    } else {
+        console.log('⚠️  google-sheets-config.json not found, using default configuration');
+    }
+} catch (error) {
+    console.warn('⚠️  Could not load google-sheets-config.json:', error.message);
+    console.log('   Using default configuration');
+}
+
+const GOOGLE_SHEETS_API_KEY = GOOGLE_SHEETS_CONFIG.apiKey;
+const SHEET_ID = GOOGLE_SHEETS_CONFIG.sheetId;
+
+// Google Sheets proxy endpoint using Google Sheets API v4
 app.get('/api/google-sheets', async (req, res) => {
     try {
-        const SHEET_ID = '1hfYLHn6peQLywoNpzVUbgrhI5w-y1xuckuGcbt2a0Ew';
-        // Try multiple URL formats to ensure compatibility
-        const SHEET_URLS = [
-            `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`,
-            `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`,
-            `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`
-        ];
-        
-        let data = null;
-        let lastError = null;
-        
-        // Try the first URL (JSON format)
-        try {
-            const response = await axios.get(SHEET_URLS[0], {
-                headers: {
-                    'Accept': '*/*',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                },
-                timeout: 15000,
-                validateStatus: function (status) {
-                    return status >= 200 && status < 400;
-                }
-            });
-            
-            // Parse the response (Google Sheets returns text that starts with "google.visualization.Query.setResponse(")
-            let responseData = response.data;
-            if (typeof responseData === 'string') {
-                // Handle the response format - remove the function wrapper
-                const jsonMatch = responseData.match(/google\.visualization\.Query\.setResponse\((.*)\);?\s*$/s);
-                if (jsonMatch && jsonMatch[1]) {
-                    data = JSON.parse(jsonMatch[1]);
-                } else {
-                    // Try alternative parsing methods
-                    const cleaned = responseData.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
-                    if (cleaned) {
-                        data = JSON.parse(cleaned);
-                    } else {
-                        // Last resort: extract JSON from the string
-                        const jsonText = responseData.replace(/^.*?\(/, '').replace(/\);?\s*$/, '');
-                        data = JSON.parse(jsonText);
-                    }
-                }
-            } else {
-                data = responseData;
-            }
-            
-            // Validate the response
-            if (!data || !data.table) {
-                throw new Error('Invalid response format from Google Sheets');
-            }
-        } catch (error) {
-            lastError = error;
-            console.error('Error with primary URL, trying alternatives...', error.message);
-            // If JSON format fails, we could try CSV format, but for now just throw
-            throw new Error(`Failed to fetch sheet data: ${error.message}. Make sure the sheet is published to the web.`);
+        // Validate API key
+        if (!GOOGLE_SHEETS_API_KEY || GOOGLE_SHEETS_API_KEY === '') {
+            throw new Error('Google Sheets API key is not configured');
         }
         
-        res.json(data);
+        // First, get spreadsheet metadata to find sheet names
+        let sheetName = 'Sheet1'; // Default sheet name
+        try {
+            const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?key=${GOOGLE_SHEETS_API_KEY}`;
+            const metadataResponse = await axios.get(metadataUrl, {
+                headers: { 'Accept': 'application/json' },
+                timeout: 10000
+            });
+            
+            if (metadataResponse.data && metadataResponse.data.sheets && metadataResponse.data.sheets.length > 0) {
+                // Use the first sheet's name
+                sheetName = metadataResponse.data.sheets[0].properties.title;
+                console.log(`Using sheet name: ${sheetName}`);
+            }
+        } catch (metadataError) {
+            console.warn('Could not fetch sheet metadata, using default "Sheet1":', metadataError.message);
+            // Continue with default sheet name
+        }
+        
+        // Get data from the sheet - use a large range to get all data
+        const range = `${sheetName}!A:ZZ`; // Get columns A to ZZ (supports up to 702 columns)
+        const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${GOOGLE_SHEETS_API_KEY}`;
+        
+        console.log('📊 Fetching data from Google Sheets API v4...');
+        console.log(`   Sheet ID: ${SHEET_ID}`);
+        console.log(`   Range: ${range}`);
+        console.log(`   API Key: ${GOOGLE_SHEETS_API_KEY.substring(0, 10)}...`);
+        console.log(`   Email: ${GOOGLE_SHEETS_CONFIG.email || 'Not specified'}`);
+        
+        const response = await axios.get(apiUrl, {
+            headers: {
+                'Accept': 'application/json',
+            },
+            timeout: 15000,
+            validateStatus: function (status) {
+                return status >= 200 && status < 400;
+            }
+        });
+        
+        // Google Sheets API v4 returns data in format: { values: [[row1], [row2], ...] }
+        const apiData = response.data;
+        
+        // Handle empty sheet
+        if (!apiData || !apiData.values || !Array.isArray(apiData.values) || apiData.values.length === 0) {
+            console.warn('Sheet appears to be empty or has no data');
+            // Return empty data structure
+            const emptyData = {
+                version: '0.6',
+                reqId: '0',
+                status: 'ok',
+                sig: '0',
+                table: {
+                    cols: [],
+                    rows: []
+                }
+            };
+            return res.json(emptyData);
+        }
+        
+        console.log(`Received ${apiData.values.length} rows from Google Sheets API`);
+        
+        // Find maximum number of columns across all rows
+        const rowLengths = apiData.values.map(row => row ? row.length : 0);
+        const maxCols = rowLengths.length > 0 ? Math.max(...rowLengths) : 0;
+        console.log(`Maximum columns: ${maxCols}`);
+        
+        // Convert Google Sheets API v4 format to gviz table format (expected by frontend)
+        const rows = apiData.values.map((row, rowIndex) => {
+            // Convert row array to gviz cell format
+            const cells = [];
+            
+            // Process each cell in the row
+            for (let colIndex = 0; colIndex < maxCols; colIndex++) {
+                const cellValue = row && row[colIndex] !== undefined ? row[colIndex] : null;
+                cells.push({
+                    v: cellValue || null,
+                    f: null
+                });
+            }
+            
+            return {
+                c: cells
+            };
+        });
+        
+        // Create column definitions
+        const cols = [];
+        for (let i = 0; i < maxCols; i++) {
+            cols.push({
+                id: `col${i}`,
+                label: `Column ${i + 1}`,
+                type: 'string'
+            });
+        }
+        
+        // Format data in gviz table format (compatible with frontend)
+        const gvizData = {
+            version: '0.6',
+            reqId: '0',
+            status: 'ok',
+            sig: '0',
+            table: {
+                cols: cols,
+                rows: rows
+            }
+        };
+        
+        console.log('Successfully converted data to gviz format');
+        console.log(`Total rows: ${rows.length}, Total columns: ${cols.length}`);
+        res.json(gvizData);
+        
     } catch (error) {
         console.error('Error fetching Google Sheets:', error.message);
         console.error('Error details:', error.response?.data || error.stack);
-        res.status(500).json({ 
-            error: 'Failed to fetch Google Sheets data', 
-            details: error.message,
-            hint: 'Make sure the sheet is published to the web (File → Share → Publish to web)'
+        
+        // Provide helpful error messages
+        let errorMessage = 'Failed to fetch Google Sheets data';
+        let errorDetails = error.message;
+        let statusCode = 500;
+        
+        if (error.response) {
+            statusCode = error.response.status || 500;
+            const data = error.response.data;
+            
+            if (statusCode === 403) {
+                errorMessage = 'API Key authentication failed';
+                errorDetails = 'The Google Sheets API key is invalid or does not have permission to access the sheet.';
+                errorDetails += '\n\nPlease check:';
+                errorDetails += '\n1. The API key in google-sheets-config.json is correct';
+                errorDetails += '\n2. Google Sheets API is enabled in Google Cloud Console';
+                errorDetails += '\n3. The sheet is shared publicly or with the account: ' + (GOOGLE_SHEETS_CONFIG.email || 'your email');
+                errorDetails += '\n4. The API key restrictions allow access to Google Sheets API';
+            } else if (statusCode === 404) {
+                errorMessage = 'Sheet not found';
+                errorDetails = 'The Google Sheet could not be found.';
+                errorDetails += '\n\nPlease check:';
+                errorDetails += '\n1. The Sheet ID in google-sheets-config.json is correct: ' + SHEET_ID;
+                errorDetails += '\n2. The sheet exists and is accessible';
+            } else if (statusCode === 400) {
+                errorMessage = 'Bad request';
+                errorDetails = data?.error?.message || 'Invalid request to Google Sheets API';
+                if (data?.error?.message) {
+                    errorDetails += '\n\nError details: ' + data.error.message;
+                }
+            } else if (data && data.error) {
+                errorDetails = data.error.message || errorDetails;
+            }
+        } else if (error.code === 'ECONNABORTED') {
+            errorMessage = 'Request timeout';
+            errorDetails = 'The request to Google Sheets API timed out. Please try again.';
+        }
+        
+        res.status(statusCode).json({ 
+            error: errorMessage, 
+            details: errorDetails,
+            hint: 'Make sure the Google Sheets API key is valid, Google Sheets API is enabled, and the sheet is accessible.'
         });
     }
 });

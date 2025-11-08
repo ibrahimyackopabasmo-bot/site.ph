@@ -45,113 +45,14 @@
     <section class="hero" style="position: relative; padding: 0; background: transparent; overflow: hidden; width: 100%; height: 100vh; min-height: 100vh; z-index: 1;">
         <div class="hero-container" style="width: 100%; height: 100%; padding: 0; margin: 0;">
             <div class="container" style="padding: 0; max-width: 100%; height: 100%; margin: 0;">
-                <div class="work-image" style="width: 100%; height: 100vh; min-height: 100vh; cursor: default; position: relative; display: block; overflow: hidden; margin: 0; padding: 0; background: transparent; pointer-events: none;">
-                    <video id="heroVideo15" class="work-video-live" autoplay loop muted playsinline preload="auto" style="width: 100%; height: 100vh; min-height: 100vh; object-fit: cover; display: block; position: absolute; top: 0; left: 0; background: transparent; z-index: 1; pointer-events: none;" webkit-playsinline="true" x-webkit-airplay="allow" defaultMuted loop="true">
+                <div class="work-image hero-video-container" style="width: 100%; height: 100vh; min-height: 100vh; cursor: pointer; position: relative; display: block; overflow: hidden; margin: 0; padding: 0; background: transparent;">
+                    <video id="heroVideo15" class="work-video-live hero-background-video" autoplay loop muted playsinline preload="auto" style="width: 100%; height: 100vh; min-height: 100vh; object-fit: cover; display: block; position: absolute; top: 0; left: 0; background: transparent; z-index: 1; transition: opacity 0.3s ease;" webkit-playsinline="true" x-webkit-airplay="allow" defaultMuted loop="true" x5-video-player-type="h5" x5-video-player-fullscreen="true" x5-video-orientation="portrait">
                         <source src="15.mp4" type="video/mp4">
                         متصفحك لا يدعم تشغيل الفيديو.
                     </video>
-                    <script>
-                        // Video 15 - Interactive video with autoplay - "Welcome to our library"
-                        (function() {
-                            var video = document.getElementById('heroVideo15');
-                            if (!video) {
-                                // Retry if video not found yet
-                                setTimeout(arguments.callee, 100);
-                                return;
-                            }
-                            
-                            // Set all properties for autoplay
-                            video.muted = true;
-                            video.loop = true;
-                            video.playsInline = true;
-                            video.defaultMuted = true;
-                            video.setAttribute('muted', 'true');
-                            video.setAttribute('loop', 'true');
-                            video.setAttribute('autoplay', 'true');
-                            video.setAttribute('playsinline', 'true');
-                            
-                            // Enhanced play function with retry
-                            function playVideo() {
-                                if (!video) return;
-                                
-                                try {
-                                    video.muted = true;
-                                    video.loop = true;
-                                    
-                                    var playPromise = video.play();
-                                    if (playPromise !== undefined) {
-                                        playPromise.then(function() {
-                                            console.log('✅ Video 15 (Welcome to our library) is playing automatically');
-                                        }).catch(function(err) {
-                                            // Retry after short delay
-                                            setTimeout(function() {
-                                                video.play().catch(function() {});
-                                            }, 300);
-                                        });
-                                    }
-                                } catch(e) {
-                                    // Retry on error
-                                    setTimeout(playVideo, 500);
-                                }
-                            }
-                            
-                            // Play on ALL video events
-                            var events = ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'progress'];
-                            events.forEach(function(eventName) {
-                                video.addEventListener(eventName, playVideo, false);
-                            });
-                            
-                            // Loop - restart when video ends
-                            video.addEventListener('ended', function() {
-                                video.currentTime = 0;
-                                video.loop = true;
-                                playVideo();
-                            }, false);
-                            
-                            // Auto-restart if paused
-                            video.addEventListener('pause', function() {
-                                if (!document.hidden && !video.ended) {
-                                    setTimeout(playVideo, 150);
-                                }
-                            }, false);
-                            
-                            // Resume when page becomes visible
-                            document.addEventListener('visibilitychange', function() {
-                                if (!document.hidden && video.paused) {
-                                    playVideo();
-                                }
-                            }, false);
-                            
-                            // Continuous monitoring - ensures video keeps playing
-                            setInterval(function() {
-                                if (video && !document.hidden) {
-                                    // Always enforce properties
-                                    video.muted = true;
-                                    video.loop = true;
-                                    
-                                    // Restart if paused or ended
-                                    if (video.paused || video.ended) {
-                                        if (video.ended) {
-                                            video.currentTime = 0;
-                                        }
-                                        playVideo();
-                                    }
-                                }
-                            }, 800);
-                            
-                            // Multiple immediate play attempts
-                            playVideo();
-                            setTimeout(playVideo, 50);
-                            setTimeout(playVideo, 150);
-                            setTimeout(playVideo, 300);
-                            setTimeout(playVideo, 600);
-                            setTimeout(playVideo, 1000);
-                            setTimeout(playVideo, 2000);
-                        })();
-                    </script>
                     <div style="position: absolute; bottom: 20px; right: 20px; background: rgba(0, 0, 0, 0.7); padding: 1rem 1.5rem; border-radius: 10px; color: white; z-index: 100; pointer-events: none; user-select: none;">
-                        <h2 style="color: white; margin: 0; font-size: 1.8rem;">Welcome to our library</h2>
-                        <p style="color: white; margin: 0.5rem 0 0 0; font-size: 1.1rem;">مرحباً بكم في مكتبتنا</p>
+                        <h2 style="color: white; margin: 0; font-size: 1.8rem;">Welcome to you in Phonex Printer</h2>
+                        <p style="color: white; margin: 0.5rem 0 0 0; font-size: 1.1rem;">مرحباً بكم في Phonex Printer</p>
                     </div>
                 </div>
             </div>
@@ -287,83 +188,7 @@
 
 
     <script src="script.js"></script>
-    <script>
-        // ENSURE VIDEO 15 ALWAYS WORKS - Continuous monitoring and interaction fallback with LOOP
-        (function() {
-            function ensureVideoPlaying() {
-                var video = document.getElementById('heroVideo15');
-                if (video) {
-                    // Always ensure properties - LOOP is critical
-                    video.muted = true;
-                    video.loop = true;
-                    video.playsInline = true;
-                    video.setAttribute('loop', 'true');
-                    video.setAttribute('autoplay', 'true');
-                    
-                    // If video ended, restart it (loop enforcement)
-                    if (video.ended) {
-                        video.currentTime = 0;
-                        video.loop = true;
-                    }
-                    
-                    // Try to play if paused or ended
-                    if (video.paused || video.ended) {
-                        if (video.ended) {
-                            video.currentTime = 0;
-                        }
-                        var promise = video.play();
-                        if (promise !== undefined) {
-                            promise.then(function() {
-                                console.log('✅ Video 15 is working continuously with LOOP');
-                            }).catch(function(err) {
-                                // Silent fail - will retry
-                            });
-                        }
-                    }
-                }
-            }
-            
-            function startVideoOnInteraction() {
-                ensureVideoPlaying();
-            }
-            
-            // Listen for ANY user interaction to start video
-            var interactions = ['click', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'keydown', 'keyup', 'scroll', 'wheel', 'pointerdown', 'mousemove'];
-            interactions.forEach(function(eventType) {
-                document.addEventListener(eventType, startVideoOnInteraction, { passive: true });
-                window.addEventListener(eventType, startVideoOnInteraction, { passive: true });
-            });
-            
-            // Continuous monitoring - check every 1 second to ensure LOOP and autoplay
-            setInterval(function() {
-                ensureVideoPlaying();
-                var video = document.getElementById('heroVideo15');
-                if (video) {
-                    // Always enforce loop
-                    video.loop = true;
-                    video.setAttribute('loop', 'true');
-                    // Check if video is near end and restart
-                    if (video.duration > 0 && video.currentTime >= video.duration - 0.3) {
-                        video.currentTime = 0;
-                        video.play().catch(function() {});
-                    }
-                }
-            }, 1000);
-            
-            // Also check when page becomes visible
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden) {
-                    setTimeout(ensureVideoPlaying, 100);
-                }
-            });
-            
-            // Try immediately on load
-            setTimeout(ensureVideoPlaying, 100);
-            setTimeout(ensureVideoPlaying, 500);
-            setTimeout(ensureVideoPlaying, 1000);
-            setTimeout(ensureVideoPlaying, 2000);
-        })();
-    </script>
 </body>
 </html>
+
 

@@ -160,8 +160,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Ensure work showcase videos play continuously
-    const liveVideos = document.querySelectorAll('.work-video-live');
+    // Ensure work showcase videos play continuously (EXCLUDE hero video)
+    const liveVideos = document.querySelectorAll('.work-video-live:not(#heroVideo15)');
     liveVideos.forEach(video => {
         // Ensure all necessary attributes are set
         video.setAttribute('autoplay', '');
@@ -349,11 +349,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Only proceed if lightbox elements exist
     if (lightboxModal && lightboxVideo && lightboxImage) {
-        // Handle hero video (video 15 in hero section)
+        // Handle hero video (video 15 in hero section) - AUTOPLAY WITH LOOP
         const heroVideo = document.getElementById('heroVideo15');
-        const heroVideoContainer = document.querySelector('.hero .work-image');
+        const heroVideoContainer = document.querySelector('.hero .hero-video-container, .hero .work-image');
         
-        if (heroVideo && heroVideoContainer) {
+        if (heroVideo) {
             // Ensure video attributes are set for continuous playback
             heroVideo.setAttribute('autoplay', '');
             heroVideo.setAttribute('loop', '');
@@ -362,21 +362,45 @@ document.addEventListener('DOMContentLoaded', function() {
             heroVideo.muted = true;
             heroVideo.loop = true;
             
-            // Video 15 is a background hero video - plays automatically, not interactive
-            // Remove click functionality - it's a background/intro video
-            heroVideoContainer.style.cursor = 'default';
-            heroVideo.style.pointerEvents = 'none';
-            // Don't add click listener - it's a background video
+            // Video 15 is a background hero video - plays automatically in background
+            // Add click handler to open video in lightbox when clicked (only if container exists)
+            if (heroVideoContainer) {
+                heroVideoContainer.style.cursor = 'pointer';
+                heroVideoContainer.addEventListener('click', function(e) {
+                    // Don't open if clicking on the welcome text overlay
+                    if (e.target.closest('div[style*="pointer-events: none"]')) {
+                        return;
+                    }
+                    openVideoInLightbox(heroVideo);
+                });
+            }
             
-            // Function to ensure video plays automatically
+            // Function to ensure video plays automatically - ALWAYS enforces LOOP
             function ensureHeroVideoPlays() {
-                if (heroVideo.paused && !heroVideo.ended) {
+                // ALWAYS enforce LOOP and muted
+                heroVideo.loop = true;
+                heroVideo.muted = true;
+                heroVideo.setAttribute('loop', 'true');
+                heroVideo.setAttribute('muted', 'true');
+                heroVideo.controls = false;
+                
+                // If video ended, restart it (LOOP enforcement)
+                if (heroVideo.ended) {
+                    heroVideo.currentTime = 0;
+                }
+                
+                // Check if near end and restart (LOOP enforcement)
+                if (heroVideo.duration > 0 && !isNaN(heroVideo.duration)) {
+                    var timeRemaining = heroVideo.duration - heroVideo.currentTime;
+                    if (timeRemaining < 0.5) {
+                        heroVideo.currentTime = 0;
+                    }
+                }
+                
+                // Play if paused or ended
+                if (heroVideo.paused || heroVideo.ended) {
                     heroVideo.play().catch(e => {
-                        console.log('Hero video autoplay attempt:', e);
-                        // Retry after a short delay
-                        setTimeout(() => {
-                            heroVideo.play().catch(() => {});
-                        }, 500);
+                        // Silent retry - will be handled by monitoring
                     });
                 }
             }
@@ -406,20 +430,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 heroVideo.play().catch(() => {});
             }, 0);
             
-            // Ensure it keeps playing - restart if paused
+            // Handle pause - auto-resume (but with delay to avoid conflicts)
+            var pauseResumeTimeout;
             heroVideo.addEventListener('pause', function() {
-                if (!document.hidden && !heroVideo.ended) {
-                    setTimeout(() => {
-                        ensureHeroVideoPlays();
-                    }, 200);
+                if (!document.hidden) {
+                    clearTimeout(pauseResumeTimeout);
+                    // Only auto-resume if not ended (loop will handle ended)
+                    if (!heroVideo.ended) {
+                        pauseResumeTimeout = setTimeout(() => {
+                            if (heroVideo.paused && !heroVideo.ended) {
+                                heroVideo.loop = true;
+                                heroVideo.muted = true;
+                                ensureHeroVideoPlays();
+                            }
+                        }, 150);
+                    }
                 }
             });
             
-            // Restart if it ends (backup for loop)
+            // Restart immediately if it ends (backup for loop)
             heroVideo.addEventListener('ended', function() {
                 heroVideo.currentTime = 0;
-                heroVideo.play().catch(() => {});
+                heroVideo.muted = true;
+                heroVideo.loop = true;
+                heroVideo.play().catch(() => {
+                    // Retry if failed
+                    setTimeout(() => heroVideo.play().catch(() => {}), 100);
+                });
             });
+            
+            // CRITICAL: Very frequent check to ensure video ALWAYS plays with LOOP
+            setInterval(function() {
+                if (heroVideo && !document.hidden) {
+                    // ALWAYS enforce LOOP
+                    heroVideo.loop = true;
+                    heroVideo.muted = true;
+                    heroVideo.setAttribute('loop', 'true');
+                    heroVideo.setAttribute('muted', 'true');
+                    heroVideo.controls = false;
+                    
+                    // Check if near end - restart early (LOOP enforcement)
+                    if (heroVideo.duration > 0 && !isNaN(heroVideo.duration)) {
+                        var timeRemaining = heroVideo.duration - heroVideo.currentTime;
+                        if (timeRemaining < 0.3) {
+                            heroVideo.currentTime = 0;
+                        }
+                    }
+                    
+                    // Force play if paused or ended
+                    if (heroVideo.paused || heroVideo.ended) {
+                        ensureHeroVideoPlays();
+                    }
+                }
+            }, 300); // Check every 300ms for better reliability
             
             // Handle visibility change - resume when page becomes visible
             document.addEventListener('visibilitychange', function() {

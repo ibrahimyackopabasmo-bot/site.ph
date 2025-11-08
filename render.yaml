@@ -12,4 +12,7 @@ services:
       # Add your Telegram bot token as an environment variable in Render dashboard for security
       # - key: TELEGRAM_BOT_TOKEN
       #   value: your-bot-token-here
+      # Add your Google Sheets API key as an environment variable in Render dashboard for security
+      # - key: GOOGLE_SHEETS_API_KEY
+      #   value: your-google-sheets-api-key-here
 
