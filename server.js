@@ -270,61 +270,169 @@ app.get('/api/google-sheets', async (req, res) => {
     }
 });
 
-// Serve HTML files
+// Helper function to send HTML files with error handling
+function sendHTMLFile(res, filename) {
+    const filePath = path.join(__dirname, filename);
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+        console.error(`File not found: ${filePath}`);
+        return res.status(404).send(`
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>خطأ 404</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                    h1 { color: #d32f2f; }
+                </style>
+            </head>
+            <body>
+                <h1>404 - الصفحة غير موجودة</h1>
+                <p>الملف المطلوب غير موجود: ${filename}</p>
+                <p><a href="/">العودة للصفحة الرئيسية</a></p>
+            </body>
+            </html>
+        `);
+    }
+    
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error(`Error sending file ${filename}:`, err);
+            res.status(500).send(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>خطأ في الخادم</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        h1 { color: #d32f2f; }
+                    </style>
+                </head>
+                <body>
+                    <h1>500 - خطأ في الخادم</h1>
+                    <p>حدث خطأ أثناء تحميل الصفحة</p>
+                    <p><a href="/">العودة للصفحة الرئيسية</a></p>
+                </body>
+                </html>
+            `);
+        }
+    });
+}
+
+// Serve HTML files - Root route with fallback
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    const indexPath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        sendHTMLFile(res, 'index.html');
+    } else {
+        // Fallback if index.html doesn't exist
+        console.error('index.html not found at:', indexPath);
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>Phonix Printer</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+                    .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                    h1 { color: #1976d2; }
+                    p { color: #666; line-height: 1.6; }
+                    .error { color: #d32f2f; background: #ffebee; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>مرحباً بكم في Phonix Printer</h1>
+                    <p>الموقع قيد التشغيل!</p>
+                    <div class="error">
+                        <strong>ملاحظة:</strong> ملف index.html غير موجود في: ${indexPath}
+                    </div>
+                    <p>الملفات الموجودة في الدليل:</p>
+                    <pre>${fs.existsSync(__dirname) ? fs.readdirSync(__dirname).join('\\n') : 'Cannot read directory'}</pre>
+                    <p><a href="/test">اختبار الخادم</a></p>
+                </div>
+            </body>
+            </html>
+        `);
+    }
 });
 
 app.get('/index.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    sendHTMLFile(res, 'index.html');
 });
 
 app.get('/mywork', (req, res) => {
-    res.sendFile(path.join(__dirname, 'mywork.html'));
+    sendHTMLFile(res, 'mywork.html');
 });
 
 app.get('/mywork.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'mywork.html'));
+    sendHTMLFile(res, 'mywork.html');
 });
 
 app.get('/prices', (req, res) => {
-    res.sendFile(path.join(__dirname, 'prices.html'));
+    sendHTMLFile(res, 'prices.html');
 });
 
 app.get('/prices.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'prices.html'));
+    sendHTMLFile(res, 'prices.html');
 });
 
 app.get('/contact', (req, res) => {
-    res.sendFile(path.join(__dirname, 'contact.html'));
+    sendHTMLFile(res, 'contact.html');
 });
 
 app.get('/contact.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'contact.html'));
+    sendHTMLFile(res, 'contact.html');
 });
 
 app.get('/request', (req, res) => {
-    res.sendFile(path.join(__dirname, 'request.html'));
+    sendHTMLFile(res, 'request.html');
 });
 
 app.get('/request.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'request.html'));
+    sendHTMLFile(res, 'request.html');
 });
 
 app.get('/discussion', (req, res) => {
-    res.sendFile(path.join(__dirname, 'discussion.html'));
+    sendHTMLFile(res, 'discussion.html');
 });
 
 app.get('/discussion.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'discussion.html'));
+    sendHTMLFile(res, 'discussion.html');
 });
 
 app.get('/errors', (req, res) => {
-    res.sendFile(path.join(__dirname, 'errors.html'));
+    sendHTMLFile(res, 'errors.html');
 });
 
 app.get('/errors.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'errors.html'));
+    sendHTMLFile(res, 'errors.html');
+});
+
+// Add a test route to verify server is running (before static files)
+app.get('/test', (req, res) => {
+    try {
+        const htmlFiles = fs.readdirSync(__dirname).filter(f => f.endsWith('.html'));
+        res.json({ 
+            status: 'ok', 
+            message: 'Server is running!',
+            timestamp: new Date().toISOString(),
+            directory: __dirname,
+            port: PORT,
+            host: HOST,
+            htmlFiles: htmlFiles,
+            indexExists: fs.existsSync(path.join(__dirname, 'index.html'))
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            status: 'error', 
+            message: 'Error reading directory',
+            error: error.message
+        });
+    }
 });
 
 // Serve static files (CSS, JS, images, videos, etc.) - after all route handlers
@@ -333,16 +441,55 @@ app.use(express.static(path.join(__dirname)));
 
 // 404 handler - must be last
 app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'errors.html'));
+    const errorPath = path.join(__dirname, 'errors.html');
+    if (fs.existsSync(errorPath)) {
+        res.status(404).sendFile(errorPath);
+    } else {
+        res.status(404).send(`
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>404 - الصفحة غير موجودة</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+                    .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                    h1 { color: #d32f2f; font-size: 48px; margin: 0; }
+                    h2 { color: #333; margin: 20px 0; }
+                    p { color: #666; line-height: 1.6; }
+                    a { color: #1976d2; text-decoration: none; font-weight: bold; }
+                    a:hover { text-decoration: underline; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>404</h1>
+                    <h2>الصفحة غير موجودة</h2>
+                    <p>عذراً، الصفحة التي تبحث عنها غير موجودة.</p>
+                    <p>Requested path: ${req.path}</p>
+                    <p><a href="/">العودة للصفحة الرئيسية</a></p>
+                </div>
+            </body>
+            </html>
+        `);
+    }
 });
 
-// Start server
-app.listen(PORT, HOST, () => {
-    console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
-    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📁 Uploads directory: ${fs.existsSync('uploads') ? 'OK' : 'NOT FOUND'}`);
-    console.log(`🤖 Telegram Bot: ${TELEGRAM_BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
-    console.log(`💡 Make sure to send a message to your Telegram bot first to get the chat ID!`);
-});
+// Start server with error handling
+try {
+    app.listen(PORT, HOST, () => {
+        console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
+        console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`📁 Working directory: ${__dirname}`);
+        console.log(`📁 Uploads directory: ${fs.existsSync('uploads') ? 'OK' : 'NOT FOUND'}`);
+        console.log(`📄 HTML files available: ${fs.readdirSync(__dirname).filter(f => f.endsWith('.html')).join(', ')}`);
+        console.log(`🤖 Telegram Bot: ${TELEGRAM_BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
+        console.log(`💡 Test endpoint: http://${HOST}:${PORT}/test`);
+        console.log(`💡 Make sure to send a message to your Telegram bot first to get the chat ID!`);
+    });
+} catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+}
 
 
