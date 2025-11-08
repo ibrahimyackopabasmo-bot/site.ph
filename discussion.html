@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonix Printer - البحث عن الدين</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="logo.png" alt="Phonix Printer" class="logo-img">
+                </a>
+                <div class="logo-address">Phonix Printer</div>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">الرئيسية</a></li>
+                <li><a href="mywork.html">أعمالنا</a></li>
+                <li><a href="prices.html">الأسعار</a></li>
+                <li><a href="contact.html">اتصل بنا</a></li>
+                <li><a href="request.html">طلب طباعة</a></li>
+                <li><a href="discussion.html" class="active">البحث عن الدين</a></li>
+            </ul>
+            <div class="navbar-social">
+                <a href="https://www.instagram.com/ar.phonex.pr?igsh=MWZtNmN5cTh0bzk1cA==" target="_blank" class="nav-social-link" title="Instagram">
+                    <img src="instgram.png" alt="Instagram" class="social-icon">
+                </a>
+                <a href="https://t.me/ar_phonex_pr" target="_blank" class="nav-social-link" title="Telegram">
+                    <img src="tlegram.png" alt="Telegram" class="social-icon">
+                </a>
+                <a href="https://wa.me/9647860893809" target="_blank" class="nav-social-link" title="WhatsApp">
+                    <img src="whatsapp.png" alt="WhatsApp" class="social-icon">
+                </a>
+            </div>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <section class="page-header">
+        <div class="container">
+            <h1>البحث عن الدين</h1>
+            <p>ابحث عن اسم الشخص لمعرفة معلومات الدين</p>
+        </div>
+    </section>
+
+    <section class="discussion-section">
+        <div class="container">
+            <div class="search-container">
+                <div class="search-box">
+                    <h2>ابحث عن الشخص</h2>
+                    <form id="searchForm" class="search-form">
+                        <div class="form-group">
+                            <label for="searchName">الاسم الكامل</label>
+                            <input 
+                                type="text" 
+                                id="searchName" 
+                                name="searchName" 
+                                placeholder="أدخل الاسم الكامل للبحث..." 
+                                required
+                                autocomplete="off"
+                            >
+                        </div>
+                        <button type="submit" class="btn-primary" id="searchBtn">
+                            <span id="searchBtnText">بحث</span>
+                            <span id="searchBtnLoader" class="loader" style="display: none;"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="discussion-controls">
+                <div class="refresh-status">
+                    <span id="refreshStatus">جاهز للبحث</span>
+                    <span id="lastUpdate" class="last-update"></span>
+                </div>
+                <button id="refreshBtn" class="btn-secondary">تحديث البيانات</button>
+            </div>
+            
+            <div id="loadingIndicator" class="loading-indicator" style="display: block;">
+                <div class="spinner"></div>
+                <p>جاري تحميل البيانات...</p>
+            </div>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+            <div id="searchResults" class="search-results" style="display: none;">
+                <h3 class="results-title">نتائج البحث</h3>
+                <div id="resultsContent" class="results-content">
+                    <!-- Search results will be displayed here -->
+                </div>
+            </div>
+
+            <div id="noResults" class="no-results" style="display: none;">
+                <p>❌ لم يتم العثور على نتائج للاسم المطلوب</p>
+                <p class="no-results-hint">يرجى التحقق من الاسم والمحاولة مرة أخرى</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 Phonix Printer. جميع الحقوق محفوظة.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/ar.phonex.pr?igsh=MWZtNmN5cTh0bzk1cA==" target="_blank" class="social-link" title="Instagram">
+                        <img src="instgram.png" alt="Instagram" class="social-icon-footer"> Instagram
+                    </a>
+                    <a href="https://t.me/ar_phonex_pr" target="_blank" class="social-link" title="Telegram">
+                        <img src="tlegram.png" alt="Telegram" class="social-icon-footer"> Telegram
+                    </a>
+                    <a href="https://wa.me/9647860893809" target="_blank" class="social-link" title="WhatsApp">
+                        <img src="whatsapp.png" alt="WhatsApp" class="social-icon-footer"> WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="discussion.js"></script>
+</body>
+</html>
+

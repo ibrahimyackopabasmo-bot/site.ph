@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonix Printer - Home</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="logo.png" alt="Phonix Printer" class="logo-img">
+                </a>
+                <div class="logo-address">Phonix Printer</div>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="active">الرئيسية</a></li>
+                <li><a href="mywork.html">أعمالنا</a></li>
+                <li><a href="prices.html">الأسعار</a></li>
+                <li><a href="contact.html">اتصل بنا</a></li>
+                <li><a href="request.html">طلب طباعة</a></li>
+                <li><a href="discussion.html">البحث عن الدين</a></li>
+            </ul>
+            <div class="navbar-social">
+                <a href="https://www.instagram.com/ar.phonex.pr?igsh=MWZtNmN5cTh0bzk1cA==" target="_blank" class="nav-social-link" title="Instagram">
+                    <img src="instgram.png" alt="Instagram" class="social-icon">
+                </a>
+                <a href="https://t.me/ar_phonex_pr" target="_blank" class="nav-social-link" title="Telegram">
+                    <img src="tlegram.png" alt="Telegram" class="social-icon">
+                </a>
+                <a href="https://wa.me/9647860893809" target="_blank" class="nav-social-link" title="WhatsApp">
+                    <img src="whatsapp.png" alt="WhatsApp" class="social-icon">
+                </a>
+            </div>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero" style="position: relative; padding: 0; background: transparent; overflow: hidden; width: 100%; height: 100vh; min-height: 100vh; z-index: 1;">
+        <div class="hero-container" style="width: 100%; height: 100%; padding: 0; margin: 0;">
+            <div class="container" style="padding: 0; max-width: 100%; height: 100%; margin: 0;">
+                <div class="work-image" style="width: 100%; height: 100vh; min-height: 100vh; cursor: default; position: relative; display: block; overflow: hidden; margin: 0; padding: 0; background: transparent; pointer-events: none;">
+                    <video id="heroVideo15" class="work-video-live" autoplay loop muted playsinline preload="auto" style="width: 100%; height: 100vh; min-height: 100vh; object-fit: cover; display: block; position: absolute; top: 0; left: 0; background: transparent; z-index: 1; pointer-events: none;" webkit-playsinline="true" x-webkit-airplay="allow" defaultMuted loop="true">
+                        <source src="15.mp4" type="video/mp4">
+                        متصفحك لا يدعم تشغيل الفيديو.
+                    </video>
+                    <script>
+                        // Video 15 - Interactive video with autoplay - "Welcome to our library"
+                        (function() {
+                            var video = document.getElementById('heroVideo15');
+                            if (!video) {
+                                // Retry if video not found yet
+                                setTimeout(arguments.callee, 100);
+                                return;
+                            }
+                            
+                            // Set all properties for autoplay
+                            video.muted = true;
+                            video.loop = true;
+                            video.playsInline = true;
+                            video.defaultMuted = true;
+                            video.setAttribute('muted', 'true');
+                            video.setAttribute('loop', 'true');
+                            video.setAttribute('autoplay', 'true');
+                            video.setAttribute('playsinline', 'true');
+                            
+                            // Enhanced play function with retry
+                            function playVideo() {
+                                if (!video) return;
+                                
+                                try {
+                                    video.muted = true;
+                                    video.loop = true;
+                                    
+                                    var playPromise = video.play();
+                                    if (playPromise !== undefined) {
+                                        playPromise.then(function() {
+                                            console.log('✅ Video 15 (Welcome to our library) is playing automatically');
+                                        }).catch(function(err) {
+                                            // Retry after short delay
+                                            setTimeout(function() {
+                                                video.play().catch(function() {});
+                                            }, 300);
+                                        });
+                                    }
+                                } catch(e) {
+                                    // Retry on error
+                                    setTimeout(playVideo, 500);
+                                }
+                            }
+                            
+                            // Play on ALL video events
+                            var events = ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough', 'playing', 'progress'];
+                            events.forEach(function(eventName) {
+                                video.addEventListener(eventName, playVideo, false);
+                            });
+                            
+                            // Loop - restart when video ends
+                            video.addEventListener('ended', function() {
+                                video.currentTime = 0;
+                                video.loop = true;
+                                playVideo();
+                            }, false);
+                            
+                            // Auto-restart if paused
+                            video.addEventListener('pause', function() {
+                                if (!document.hidden && !video.ended) {
+                                    setTimeout(playVideo, 150);
+                                }
+                            }, false);
+                            
+                            // Resume when page becomes visible
+                            document.addEventListener('visibilitychange', function() {
+                                if (!document.hidden && video.paused) {
+                                    playVideo();
+                                }
+                            }, false);
+                            
+                            // Continuous monitoring - ensures video keeps playing
+                            setInterval(function() {
+                                if (video && !document.hidden) {
+                                    // Always enforce properties
+                                    video.muted = true;
+                                    video.loop = true;
+                                    
+                                    // Restart if paused or ended
+                                    if (video.paused || video.ended) {
+                                        if (video.ended) {
+                                            video.currentTime = 0;
+                                        }
+                                        playVideo();
+                                    }
+                                }
+                            }, 800);
+                            
+                            // Multiple immediate play attempts
+                            playVideo();
+                            setTimeout(playVideo, 50);
+                            setTimeout(playVideo, 150);
+                            setTimeout(playVideo, 300);
+                            setTimeout(playVideo, 600);
+                            setTimeout(playVideo, 1000);
+                            setTimeout(playVideo, 2000);
+                        })();
+                    </script>
+                    <div style="position: absolute; bottom: 20px; right: 20px; background: rgba(0, 0, 0, 0.7); padding: 1rem 1.5rem; border-radius: 10px; color: white; z-index: 100; pointer-events: none; user-select: none;">
+                        <h2 style="color: white; margin: 0; font-size: 1.8rem;">Welcome to our library</h2>
+                        <p style="color: white; margin: 0.5rem 0 0 0; font-size: 1.1rem;">مرحباً بكم في مكتبتنا</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">خدماتنا</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">📄</div>
+                    <h3>طباعة الأوراق</h3>
+                    <p>طباعة أوراق بجميع الأحجام (A4 وأحجام أخرى) بجودة عالية وألوان زاهية</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🖼️</div>
+                    <h3>طباعة الصور والبوسترات</h3>
+                    <p>طباعة الصور والبوسترات بجودة عالية وأحجام مختلفة لجميع احتياجاتك</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💳</div>
+                    <h3>طباعة البطاقات</h3>
+                    <p>طباعة البطاقات الشخصية وبيزنس كارد بتصميم احترافي وجودة عالية</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="work-showcase">
+        <div class="container">
+            <h2 class="section-title">أعمالنا</h2>
+            <div class="work-grid">
+                <div class="work-item">
+                    <div class="work-image">
+                        <video class="work-video-live" autoplay loop muted playsinline preload="auto">
+                            <source src="1.mp4" type="video/mp4">
+                            متصفحك لا يدعم تشغيل الفيديو.
+                        </video>
+                    </div>
+                    <h3>جزء من طباعة ورق ملون عادي </h3>
+                    <p>طباعة عالية الجودة </p>
+                </div>
+                <div class="work-item">
+                    <div class="work-image">
+                        <video class="work-video-live" autoplay loop muted playsinline preload="auto">
+                            <source src="2.MOV" type="video/quicktime">
+                            <source src="2.MOV" type="video/mp4">
+                            متصفحك لا يدعم تشغيل الفيديو.
+                        </video>
+                    </div>
+                    <h3>جزء من طباعة ورق ملون عادي </h3>
+                    <p>طباعة عالية الجودة والوان زاهية </p>
+                </div>
+                <div class="work-item">
+                    <div class="work-image">
+                        <video class="work-video-live" autoplay loop muted playsinline preload="auto">
+                            <source src="3.mp4" type="video/mp4">
+                            متصفحك لا يدعم تشغيل الفيديو.
+                        </video>
+                    </div>
+                    <h3>جزء من طباعة ورق صدفي </h3>
+                    <p>طباعة عالية الجودة والوان زاهية </p>
+                </div>
+                <div class="work-item">
+                    <div class="work-image">
+                        <img src="4.jpg" alt="طباعة ورق عادي" class="work-image-img">
+                    </div>
+                    <h3>جزء من طباعة ورق عادي</h3>
+                    <p>طباعة عالية الجودة </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">لماذا Phonix Printer؟</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">✓</div>
+                    <h3>جودة عالية</h3>
+                    <p>نستخدم أحدث التقنيات لضمان جودة الطباعة</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <h3>سرعة في التنفيذ</h3>
+                    <p>ننهي طلباتكم في أسرع وقت ممكن</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">💰</div>
+                    <h3>أسعار منافسة</h3>
+                    <p>أفضل الأسعار في السوق</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎨</div>
+                    <h3>تصميم احترافي</h3>
+                    <p>فريق متخصص في الطباعة</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 Phonix Printer. جميع الحقوق محفوظة.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/ar.phonex.pr?igsh=MWZtNmN5cTh0bzk1cA==" target="_blank" class="social-link" title="Instagram">
+                        <img src="instgram.png" alt="Instagram" class="social-icon-footer"> Instagram
+                    </a>
+                    <a href="https://t.me/ar_phonex_pr" target="_blank" class="social-link" title="Telegram">
+                        <img src="tlegram.png" alt="Telegram" class="social-icon-footer"> Telegram
+                    </a>
+                    <a href="https://wa.me/9647860893809" target="_blank" class="social-link" title="WhatsApp">
+                        <img src="whatsapp.png" alt="WhatsApp" class="social-icon-footer"> WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Lightbox Modal -->
+    <div id="lightboxModal" class="lightbox-modal">
+        <span class="lightbox-close">&times;</span>
+        <div class="lightbox-content">
+            <video id="lightboxVideo" class="lightbox-media" controls style="display: none;">
+                متصفحك لا يدعم تشغيل الفيديو.
+            </video>
+            <img id="lightboxImage" class="lightbox-media" src="" alt="" style="display: none;">
+        </div>
+    </div>
+
+
+    <script src="script.js"></script>
+    <script>
+        // ENSURE VIDEO 15 ALWAYS WORKS - Continuous monitoring and interaction fallback with LOOP
+        (function() {
+            function ensureVideoPlaying() {
+                var video = document.getElementById('heroVideo15');
+                if (video) {
+                    // Always ensure properties - LOOP is critical
+                    video.muted = true;
+                    video.loop = true;
+                    video.playsInline = true;
+                    video.setAttribute('loop', 'true');
+                    video.setAttribute('autoplay', 'true');
+                    
+                    // If video ended, restart it (loop enforcement)
+                    if (video.ended) {
+                        video.currentTime = 0;
+                        video.loop = true;
+                    }
+                    
+                    // Try to play if paused or ended
+                    if (video.paused || video.ended) {
+                        if (video.ended) {
+                            video.currentTime = 0;
+                        }
+                        var promise = video.play();
+                        if (promise !== undefined) {
+                            promise.then(function() {
+                                console.log('✅ Video 15 is working continuously with LOOP');
+                            }).catch(function(err) {
+                                // Silent fail - will retry
+                            });
+                        }
+                    }
+                }
+            }
+            
+            function startVideoOnInteraction() {
+                ensureVideoPlaying();
+            }
+            
+            // Listen for ANY user interaction to start video
+            var interactions = ['click', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'keydown', 'keyup', 'scroll', 'wheel', 'pointerdown', 'mousemove'];
+            interactions.forEach(function(eventType) {
+                document.addEventListener(eventType, startVideoOnInteraction, { passive: true });
+                window.addEventListener(eventType, startVideoOnInteraction, { passive: true });
+            });
+            
+            // Continuous monitoring - check every 1 second to ensure LOOP and autoplay
+            setInterval(function() {
+                ensureVideoPlaying();
+                var video = document.getElementById('heroVideo15');
+                if (video) {
+                    // Always enforce loop
+                    video.loop = true;
+                    video.setAttribute('loop', 'true');
+                    // Check if video is near end and restart
+                    if (video.duration > 0 && video.currentTime >= video.duration - 0.3) {
+                        video.currentTime = 0;
+                        video.play().catch(function() {});
+                    }
+                }
+            }, 1000);
+            
+            // Also check when page becomes visible
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    setTimeout(ensureVideoPlaying, 100);
+                }
+            });
+            
+            // Try immediately on load
+            setTimeout(ensureVideoPlaying, 100);
+            setTimeout(ensureVideoPlaying, 500);
+            setTimeout(ensureVideoPlaying, 1000);
+            setTimeout(ensureVideoPlaying, 2000);
+        })();
+    </script>
+</body>
+</html>
+
