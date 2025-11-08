@@ -272,88 +272,293 @@ app.get('/api/google-sheets', async (req, res) => {
 
 // Helper function to send HTML files with error handling
 function sendHTMLFile(res, filename) {
-    const filePath = path.join(__dirname, filename);
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-        console.error(`File not found: ${filePath}`);
-        return res.status(404).send(`
+    try {
+        const filePath = path.join(__dirname, filename);
+        
+        // Check if file exists
+        if (!fs.existsSync(filePath)) {
+            console.error(`File not found: ${filePath}`);
+            console.error(`Current directory: ${__dirname}`);
+            console.error(`Looking for: ${filename}`);
+            
+            // Try to list directory contents
+            try {
+                const files = fs.readdirSync(__dirname);
+                console.error(`Available files: ${files.slice(0, 20).join(', ')}${files.length > 20 ? '...' : ''}`);
+            } catch (listError) {
+                console.error(`Could not list directory: ${listError.message}`);
+            }
+            
+            return res.status(404).send(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>خطأ 404</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+                        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                        h1 { color: #d32f2f; }
+                        p { color: #666; line-height: 1.6; }
+                        a { color: #1976d2; text-decoration: none; font-weight: bold; }
+                        a:hover { text-decoration: underline; }
+                        .error-details { background: #ffebee; padding: 15px; border-radius: 5px; margin: 20px 0; font-family: monospace; font-size: 12px; text-align: left; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>404 - الصفحة غير موجودة</h1>
+                        <p>الملف المطلوب غير موجود: <strong>${filename}</strong></p>
+                        <div class="error-details">
+                            <strong>Path:</strong> ${filePath}<br>
+                            <strong>Directory:</strong> ${__dirname}
+                        </div>
+                        <p><a href="/">العودة للصفحة الرئيسية</a> | <a href="/test">اختبار الخادم</a></p>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+        
+        // Send the file
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error(`Error sending file ${filename}:`, err);
+                res.status(500).send(`
+                    <!DOCTYPE html>
+                    <html lang="ar" dir="rtl">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>خطأ في الخادم</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+                            .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                            h1 { color: #d32f2f; }
+                            p { color: #666; line-height: 1.6; }
+                            a { color: #1976d2; text-decoration: none; font-weight: bold; }
+                            a:hover { text-decoration: underline; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <h1>500 - خطأ في الخادم</h1>
+                            <p>حدث خطأ أثناء تحميل الصفحة</p>
+                            <p>Error: ${err.message}</p>
+                            <p><a href="/">العودة للصفحة الرئيسية</a> | <a href="/test">اختبار الخادم</a></p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+            }
+        });
+    } catch (error) {
+        console.error(`Exception in sendHTMLFile for ${filename}:`, error);
+        res.status(500).send(`
             <!DOCTYPE html>
             <html lang="ar" dir="rtl">
             <head>
                 <meta charset="UTF-8">
-                <title>خطأ 404</title>
+                <title>خطأ في الخادم</title>
                 <style>
                     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
                     h1 { color: #d32f2f; }
                 </style>
             </head>
             <body>
-                <h1>404 - الصفحة غير موجودة</h1>
-                <p>الملف المطلوب غير موجود: ${filename}</p>
-                <p><a href="/">العودة للصفحة الرئيسية</a></p>
+                <h1>500 - خطأ في الخادم</h1>
+                <p>حدث خطأ غير متوقع: ${error.message}</p>
+                <p><a href="/test">اختبار الخادم</a></p>
             </body>
             </html>
         `);
     }
-    
-    res.sendFile(filePath, (err) => {
-        if (err) {
-            console.error(`Error sending file ${filename}:`, err);
-            res.status(500).send(`
-                <!DOCTYPE html>
-                <html lang="ar" dir="rtl">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>خطأ في الخادم</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                        h1 { color: #d32f2f; }
-                    </style>
-                </head>
-                <body>
-                    <h1>500 - خطأ في الخادم</h1>
-                    <p>حدث خطأ أثناء تحميل الصفحة</p>
-                    <p><a href="/">العودة للصفحة الرئيسية</a></p>
-                </body>
-                </html>
-            `);
-        }
-    });
 }
 
-// Serve HTML files - Root route with fallback
+// Serve HTML files - Root route with comprehensive fallback
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'index.html');
-    if (fs.existsSync(indexPath)) {
-        sendHTMLFile(res, 'index.html');
-    } else {
-        // Fallback if index.html doesn't exist
+    try {
+        const indexPath = path.join(__dirname, 'index.html');
+        
+        // Try to send index.html if it exists
+        if (fs.existsSync(indexPath)) {
+            console.log('Serving index.html from:', indexPath);
+            sendHTMLFile(res, 'index.html');
+            return;
+        }
+        
+        // Fallback: Show diagnostic page
         console.error('index.html not found at:', indexPath);
-        res.send(`
+        console.error('Current directory:', __dirname);
+        
+        let filesList = 'Cannot read directory';
+        let htmlFilesList = [];
+        try {
+            const files = fs.readdirSync(__dirname);
+            filesList = files.join(', ');
+            htmlFilesList = files.filter(f => f.endsWith('.html'));
+        } catch (err) {
+            console.error('Error reading directory:', err.message);
+            filesList = `Error: ${err.message}`;
+        }
+        
+        res.status(200).send(`
             <!DOCTYPE html>
             <html lang="ar" dir="rtl">
             <head>
                 <meta charset="UTF-8">
-                <title>Phonix Printer</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Phonix Printer - Server Status</title>
                 <style>
-                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
-                    .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                    h1 { color: #1976d2; }
-                    p { color: #666; line-height: 1.6; }
-                    .error { color: #d32f2f; background: #ffebee; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        min-height: 100vh;
+                        padding: 20px;
+                    }
+                    .container { 
+                        max-width: 900px; 
+                        margin: 0 auto; 
+                        background: white; 
+                        padding: 40px; 
+                        border-radius: 15px; 
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    }
+                    h1 { 
+                        color: #1976d2; 
+                        margin-bottom: 20px;
+                        font-size: 2.5em;
+                    }
+                    h2 {
+                        color: #333;
+                        margin: 20px 0 10px 0;
+                        border-bottom: 2px solid #1976d2;
+                        padding-bottom: 10px;
+                    }
+                    .status {
+                        background: #4caf50;
+                        color: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        margin: 20px 0;
+                        font-size: 1.2em;
+                        text-align: center;
+                    }
+                    .warning {
+                        background: #ff9800;
+                        color: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        margin: 20px 0;
+                    }
+                    .error { 
+                        background: #f44336;
+                        color: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        margin: 20px 0;
+                    }
+                    .info {
+                        background: #e3f2fd;
+                        padding: 15px;
+                        border-radius: 8px;
+                        margin: 10px 0;
+                        border-left: 4px solid #1976d2;
+                    }
+                    pre {
+                        background: #f5f5f5;
+                        padding: 15px;
+                        border-radius: 5px;
+                        overflow-x: auto;
+                        font-size: 12px;
+                        margin: 10px 0;
+                    }
+                    a { 
+                        color: #1976d2; 
+                        text-decoration: none; 
+                        font-weight: bold;
+                        display: inline-block;
+                        margin: 5px 10px 5px 0;
+                        padding: 10px 20px;
+                        background: #e3f2fd;
+                        border-radius: 5px;
+                    }
+                    a:hover { 
+                        background: #1976d2;
+                        color: white;
+                    }
+                    .endpoints {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        margin: 20px 0;
+                    }
                 </style>
             </head>
             <body>
                 <div class="container">
-                    <h1>مرحباً بكم في Phonix Printer</h1>
-                    <p>الموقع قيد التشغيل!</p>
-                    <div class="error">
-                        <strong>ملاحظة:</strong> ملف index.html غير موجود في: ${indexPath}
+                    <h1>🚀 Phonix Printer - Server Status</h1>
+                    
+                    <div class="status">
+                        ✅ الخادم يعمل بنجاح! (Server is Running)
                     </div>
-                    <p>الملفات الموجودة في الدليل:</p>
-                    <pre>${fs.existsSync(__dirname) ? fs.readdirSync(__dirname).join('\\n') : 'Cannot read directory'}</pre>
-                    <p><a href="/test">اختبار الخادم</a></p>
+                    
+                    <div class="warning">
+                        ⚠️ <strong>ملاحظة:</strong> ملف index.html غير موجود في الموقع
+                    </div>
+                    
+                    <h2>معلومات الخادم (Server Information)</h2>
+                    <div class="info">
+                        <strong>المسار:</strong> ${indexPath}<br>
+                        <strong>الدليل الحالي:</strong> ${__dirname}<br>
+                        <strong>المنفذ:</strong> ${PORT}<br>
+                        <strong>البيئة:</strong> ${process.env.NODE_ENV || 'development'}
+                    </div>
+                    
+                    <h2>الملفات الموجودة (Available Files)</h2>
+                    <div class="info">
+                        <strong>عدد الملفات:</strong> ${typeof filesList === 'string' && filesList.includes(',') ? filesList.split(',').length : 'Unknown'}<br>
+                        <strong>ملفات HTML:</strong> ${htmlFilesList.length > 0 ? htmlFilesList.join(', ') : 'لا توجد ملفات HTML'}
+                    </div>
+                    
+                    <pre>${filesList}</pre>
+                    
+                    <h2>الروابط المتاحة (Available Endpoints)</h2>
+                    <div class="endpoints">
+                        <a href="/test">🔍 اختبار الخادم (/test)</a>
+                        <a href="/api/health">❤️ Health Check</a>
+                        <a href="/mywork">📄 أعمالنا</a>
+                        <a href="/prices">💰 الأسعار</a>
+                        <a href="/contact">📞 اتصل بنا</a>
+                    </div>
+                    
+                    <div class="info">
+                        <strong>💡 نصيحة:</strong> إذا كنت ترى هذه الصفحة، فهذا يعني أن الخادم يعمل بشكل صحيح، لكن ملف index.html غير موجود. 
+                        يرجى التأكد من أن جميع الملفات موجودة في مستودع GitHub وأن عملية النشر تمت بنجاح.
+                    </div>
                 </div>
+            </body>
+            </html>
+        `);
+    } catch (error) {
+        console.error('Error in root route:', error);
+        res.status(500).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Server Error</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 50px; text-align: center; }
+                    h1 { color: #d32f2f; }
+                </style>
+            </head>
+            <body>
+                <h1>500 - Server Error</h1>
+                <p>Error: ${error.message}</p>
+                <p><a href="/test">Test Server</a></p>
             </body>
             </html>
         `);
@@ -415,22 +620,54 @@ app.get('/errors.html', (req, res) => {
 // Add a test route to verify server is running (before static files)
 app.get('/test', (req, res) => {
     try {
-        const htmlFiles = fs.readdirSync(__dirname).filter(f => f.endsWith('.html'));
+        let htmlFiles = [];
+        let allFiles = [];
+        let indexExists = false;
+        let directoryReadable = true;
+        
+        try {
+            allFiles = fs.readdirSync(__dirname);
+            htmlFiles = allFiles.filter(f => f.endsWith('.html'));
+            indexExists = fs.existsSync(path.join(__dirname, 'index.html'));
+        } catch (error) {
+            directoryReadable = false;
+            console.error('Error reading directory in /test:', error.message);
+        }
+        
         res.json({ 
             status: 'ok', 
             message: 'Server is running!',
             timestamp: new Date().toISOString(),
-            directory: __dirname,
-            port: PORT,
-            host: HOST,
-            htmlFiles: htmlFiles,
-            indexExists: fs.existsSync(path.join(__dirname, 'index.html'))
+            server: {
+                directory: __dirname,
+                port: PORT,
+                host: HOST,
+                nodeEnv: process.env.NODE_ENV || 'development'
+            },
+            files: {
+                directoryReadable: directoryReadable,
+                totalFiles: allFiles.length,
+                htmlFiles: htmlFiles,
+                indexExists: indexExists,
+                indexPath: path.join(__dirname, 'index.html')
+            },
+            endpoints: {
+                home: '/',
+                test: '/test',
+                health: '/api/health',
+                mywork: '/mywork',
+                prices: '/prices',
+                contact: '/contact',
+                request: '/request'
+            }
         });
     } catch (error) {
+        console.error('Error in /test endpoint:', error);
         res.status(500).json({ 
             status: 'error', 
-            message: 'Error reading directory',
-            error: error.message
+            message: 'Error in test endpoint',
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
@@ -477,18 +714,51 @@ app.use((req, res) => {
 
 // Start server with error handling
 try {
-    app.listen(PORT, HOST, () => {
-        console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
-        console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`📁 Working directory: ${__dirname}`);
-        console.log(`📁 Uploads directory: ${fs.existsSync('uploads') ? 'OK' : 'NOT FOUND'}`);
-        console.log(`📄 HTML files available: ${fs.readdirSync(__dirname).filter(f => f.endsWith('.html')).join(', ')}`);
-        console.log(`🤖 Telegram Bot: ${TELEGRAM_BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
+    // Log startup info safely
+    console.log(`🚀 Starting server...`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📁 Working directory: ${__dirname}`);
+    console.log(`🔌 Port: ${PORT}`);
+    console.log(`🌐 Host: ${HOST}`);
+    
+    // Safely check for files
+    try {
+        const files = fs.readdirSync(__dirname);
+        const htmlFiles = files.filter(f => f.endsWith('.html'));
+        console.log(`📄 HTML files found: ${htmlFiles.length > 0 ? htmlFiles.join(', ') : 'NONE'}`);
+        console.log(`📁 Total files in directory: ${files.length}`);
+    } catch (err) {
+        console.warn(`⚠️  Could not read directory: ${err.message}`);
+    }
+    
+    // Check uploads directory
+    try {
+        console.log(`📁 Uploads directory: ${fs.existsSync('uploads') ? 'OK' : 'NOT FOUND (will be created if needed)'}`);
+    } catch (err) {
+        console.warn(`⚠️  Could not check uploads directory: ${err.message}`);
+    }
+    
+    console.log(`🤖 Telegram Bot: ${TELEGRAM_BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
+    
+    // Start the server
+    const server = app.listen(PORT, HOST, () => {
+        console.log(`✅ Server is running on http://${HOST}:${PORT}`);
         console.log(`💡 Test endpoint: http://${HOST}:${PORT}/test`);
+        console.log(`💡 Health check: http://${HOST}:${PORT}/api/health`);
         console.log(`💡 Make sure to send a message to your Telegram bot first to get the chat ID!`);
     });
+    
+    // Handle server errors
+    server.on('error', (error) => {
+        console.error('❌ Server error:', error);
+        if (error.code === 'EADDRINUSE') {
+            console.error(`❌ Port ${PORT} is already in use`);
+        }
+    });
+    
 } catch (error) {
     console.error('❌ Failed to start server:', error);
+    console.error('❌ Error stack:', error.stack);
     process.exit(1);
 }
 
