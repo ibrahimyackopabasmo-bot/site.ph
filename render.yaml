@@ -6,8 +6,10 @@ services:
     buildCommand: npm install
     startCommand: npm start
     envVars:
-      - key: PORT
-        value: 3000
       - key: NODE_ENV
         value: production
+      # PORT is automatically set by Render, don't override it
+      # Add your Telegram bot token as an environment variable in Render dashboard for security
+      # - key: TELEGRAM_BOT_TOKEN
+      #   value: your-bot-token-here
 

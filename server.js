@@ -8,9 +8,10 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
-// Telegram Bot Configuration
-const TELEGRAM_BOT_TOKEN = '7706159005:AAE1HzeUEcbVlKb0kiK_rm4LiuhS-4zIG6k';
+// Telegram Bot Configuration - Use environment variable for security
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7706159005:AAE1HzeUEcbVlKb0kiK_rm4LiuhS-4zIG6k';
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 // Configure multer for file uploads
@@ -29,8 +30,14 @@ const upload = multer({
 });
 
 // Create uploads directory if it doesn't exist
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
+// Use try-catch to handle permission issues on Render
+try {
+    if (!fs.existsSync('uploads')) {
+        fs.mkdirSync('uploads', { recursive: true });
+    }
+} catch (error) {
+    console.warn('Warning: Could not create uploads directory:', error.message);
+    console.warn('File uploads may not work properly.');
 }
 
 // Middleware
@@ -67,6 +74,11 @@ async function sendTelegramMessage(chatId, message) {
 // Function to send PDF file to Telegram
 async function sendTelegramDocument(chatId, filePath, fileName) {
     try {
+        // Check if file exists before trying to send
+        if (!fs.existsSync(filePath)) {
+            return { success: false, error: 'File not found on server' };
+        }
+
         const form = new FormData();
         form.append('chat_id', chatId);
         form.append('document', fs.createReadStream(filePath), {
@@ -325,9 +337,12 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    console.log(`Make sure to send a message to your Telegram bot first to get the chat ID!`);
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📁 Uploads directory: ${fs.existsSync('uploads') ? 'OK' : 'NOT FOUND'}`);
+    console.log(`🤖 Telegram Bot: ${TELEGRAM_BOT_TOKEN ? 'Configured' : 'NOT CONFIGURED'}`);
+    console.log(`💡 Make sure to send a message to your Telegram bot first to get the chat ID!`);
 });
 
 
