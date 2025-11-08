@@ -36,7 +36,9 @@ if (!fs.existsSync('uploads')) {
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+
+// API routes should come before static file serving
+// (API routes are defined below)
 
 // Paper type names in Arabic with prices
 const paperTypes = {
@@ -261,7 +263,23 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/mywork', (req, res) => {
+    res.sendFile(path.join(__dirname, 'mywork.html'));
+});
+
+app.get('/mywork.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'mywork.html'));
+});
+
 app.get('/prices', (req, res) => {
+    res.sendFile(path.join(__dirname, 'prices.html'));
+});
+
+app.get('/prices.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'prices.html'));
 });
 
@@ -269,19 +287,39 @@ app.get('/contact', (req, res) => {
     res.sendFile(path.join(__dirname, 'contact.html'));
 });
 
+app.get('/contact.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'contact.html'));
+});
+
 app.get('/request', (req, res) => {
     res.sendFile(path.join(__dirname, 'request.html'));
 });
 
-app.get('/errors', (req, res) => {
-    res.sendFile(path.join(__dirname, 'errors.html'));
+app.get('/request.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'request.html'));
 });
 
 app.get('/discussion', (req, res) => {
     res.sendFile(path.join(__dirname, 'discussion.html'));
 });
 
-// 404 handler
+app.get('/discussion.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'discussion.html'));
+});
+
+app.get('/errors', (req, res) => {
+    res.sendFile(path.join(__dirname, 'errors.html'));
+});
+
+app.get('/errors.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'errors.html'));
+});
+
+// Serve static files (CSS, JS, images, videos, etc.) - after all route handlers
+// Route handlers (app.get) are matched before app.use middleware, so HTML routes will be handled first
+app.use(express.static(path.join(__dirname)));
+
+// 404 handler - must be last
 app.use((req, res) => {
     res.status(404).sendFile(path.join(__dirname, 'errors.html'));
 });
@@ -291,4 +329,5 @@ app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log(`Make sure to send a message to your Telegram bot first to get the chat ID!`);
 });
+
 
