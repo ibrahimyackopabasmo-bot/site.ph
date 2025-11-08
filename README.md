@@ -82,6 +82,33 @@ http://localhost:3000
 - يمكنك تخصيص الألوان والتصميم من خلال ملف `styles.css`
 - يمكنك إضافة المزيد من الميزات من خلال تعديل الملفات الموجودة
 
+## النشر على Render
+
+### الخطوات السريعة:
+
+1. **إنشاء حساب على Render**
+   - اذهب إلى https://render.com
+   - سجل دخول باستخدام GitHub
+
+2. **إنشاء خدمة ويب جديدة**
+   - اضغط على "New +" ثم "Web Service"
+   - اختر المستودع: `ibrahimyackopabasmo-bot/site.ph`
+   - الاسم: `phonix-printer`
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - اضغط "Create Web Service"
+
+3. **الانتظار حتى يكتمل النشر**
+   - سيتم نشر موقعك تلقائياً
+   - الرابط: `https://your-app-name.onrender.com`
+
+### التفاصيل الكاملة:
+راجع ملف `RENDER_DEPLOY.md` للحصول على دليل مفصل خطوة بخطوة.
+
+## GitHub Repository
+
+المستودع متوفر على: https://github.com/ibrahimyackopabasmo-bot/site.ph.git
+
 ## الدعم
 
 للمساعدة أو الاستفسارات، يرجى التواصل معنا عبر صفحة الاتصال.
