@@ -39,20 +39,10 @@ function getCurrentTheme() {
 document.addEventListener('DOMContentLoaded', function() {
     initTheme();
     
-    // Update user info in settings menu
-    updateSettingsUserInfo();
-    
     // Settings menu toggle
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsMenu = document.getElementById('settingsMenu');
     const settingsClose = document.getElementById('settingsClose');
-    
-    // Update user info when settings menu is opened
-    if (settingsBtn && settingsMenu) {
-        settingsBtn.addEventListener('click', function() {
-            updateSettingsUserInfo();
-        });
-    }
     
     if (settingsBtn && settingsMenu) {
         settingsBtn.addEventListener('click', function(e) {
