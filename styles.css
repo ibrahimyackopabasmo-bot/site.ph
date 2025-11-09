@@ -128,6 +128,10 @@ body {
     border: 2px solid #455a64;
 }
 
+[data-theme="dark"] .settings-section p {
+    color: #b0b0b0;
+}
+
 [data-theme="dark"] .user-info {
     background-color: #34495e;
     border-right-color: var(--primary-color);
