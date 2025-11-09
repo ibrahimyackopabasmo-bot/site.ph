@@ -291,17 +291,27 @@
     </div>
 
     <script>
-        // Load and display uploaded works on homepage
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof getSavedWorks === 'function') {
+        // Function to load and display uploaded works
+        function loadUploadedWorks() {
+            // Wait for settings.js to be loaded
+            if (typeof getSavedWorks !== 'function') {
+                console.warn('getSavedWorks function not available, retrying...');
+                setTimeout(loadUploadedWorks, 100);
+                return;
+            }
+            
+            try {
                 const works = getSavedWorks();
                 const workGrid = document.getElementById('homeWorkGrid');
                 
+                console.log('Loading works:', works.length);
+                console.log('Work grid element:', workGrid);
+                
                 if (works && works.length > 0 && workGrid) {
                     // Add uploaded works after existing works
-                    works.forEach(work => {
+                    works.forEach((work, index) => {
                         if (!work || !work.image) {
-                            console.warn('Invalid work data:', work);
+                            console.warn('Invalid work data at index', index, ':', work);
                             return; // Skip invalid works
                         }
                         
@@ -360,10 +370,27 @@
                             <p>${work.description || 'طباعة عالية الجودة'}</p>
                         `;
                         workGrid.appendChild(workItem);
+                        console.log('Added work item:', work.title);
                     });
+                    console.log('Finished adding works to grid');
+                } else {
+                    console.log('No works to display or work grid not found');
                 }
+            } catch (error) {
+                console.error('Error loading uploaded works:', error);
             }
-        });
+        }
+        
+        // Load works when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadUploadedWorks);
+        } else {
+            // DOM is already ready
+            loadUploadedWorks();
+        }
+        
+        // Also expose function globally for manual refresh if needed
+        window.loadUploadedWorks = loadUploadedWorks;
     </script>
     <script src="script.js"></script>
 </body>
