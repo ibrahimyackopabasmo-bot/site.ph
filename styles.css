@@ -1196,6 +1196,52 @@ body {
     margin-top: 1rem;
 }
 
+.search-form select.date-search-type {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: var(--white);
+    cursor: pointer;
+}
+
+.search-form select.date-search-type:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+}
+
+#dateFiltersContainer {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    border: 2px solid #e9ecef;
+}
+
+#dateFiltersContainer .form-group {
+    margin-bottom: 1rem;
+}
+
+#dateFiltersContainer .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.search-form input[type="number"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.search-form input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+}
+
 /* Autocomplete Styles */
 .autocomplete-wrapper {
     position: relative;
