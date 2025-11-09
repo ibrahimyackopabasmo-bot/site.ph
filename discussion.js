@@ -22,11 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsContent = document.getElementById('resultsContent');
     const noResults = document.getElementById('noResults');
     const searchNameInput = document.getElementById('searchName');
-    const dateSearchTypeSelect = document.getElementById('dateSearchType');
-    const dateFiltersContainer = document.getElementById('dateFiltersContainer');
-    const daySearchGroup = document.getElementById('daySearchGroup');
-    const monthSearchGroup = document.getElementById('monthSearchGroup');
-    const yearSearchGroup = document.getElementById('yearSearchGroup');
+    const searchReligionInput = document.getElementById('searchReligion');
     const searchDayInput = document.getElementById('searchDay');
     const searchMonthInput = document.getElementById('searchMonth');
     const searchYearInput = document.getElementById('searchYear');
@@ -42,52 +38,13 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingIndicator.style.display = 'block';
     refreshStatus.textContent = 'جاري تحميل البيانات...';
     loadSheetData(true); // true = initial load
-
-    // Date search type change handler - show/hide appropriate fields
-    if (dateSearchTypeSelect) {
-        dateSearchTypeSelect.addEventListener('change', function() {
-            const searchType = this.value;
-            
-            // Hide container if no search type selected
-            if (!searchType) {
-                if (dateFiltersContainer) dateFiltersContainer.style.display = 'none';
-                if (daySearchGroup) daySearchGroup.style.display = 'none';
-                if (monthSearchGroup) monthSearchGroup.style.display = 'none';
-                if (yearSearchGroup) yearSearchGroup.style.display = 'none';
-                return;
-            }
-            
-            // Show container
-            if (dateFiltersContainer) dateFiltersContainer.style.display = 'block';
-            
-            // Hide all date input groups first
-            if (daySearchGroup) daySearchGroup.style.display = 'none';
-            if (monthSearchGroup) monthSearchGroup.style.display = 'none';
-            if (yearSearchGroup) yearSearchGroup.style.display = 'none';
-            
-            // Show appropriate groups based on selection
-            if (searchType === 'day') {
-                // For day search, show day (required), month (optional), and year (optional)
-                if (daySearchGroup) daySearchGroup.style.display = 'block';
-                if (monthSearchGroup) monthSearchGroup.style.display = 'block';
-                if (yearSearchGroup) yearSearchGroup.style.display = 'block';
-            } else if (searchType === 'month') {
-                // For month search, show month (required) and year (optional)
-                if (monthSearchGroup) monthSearchGroup.style.display = 'block';
-                if (yearSearchGroup) yearSearchGroup.style.display = 'block';
-            } else if (searchType === 'year') {
-                // For year search, show year only
-                if (yearSearchGroup) yearSearchGroup.style.display = 'block';
-            }
-        });
-    }
     
     // Search form submission
     if (searchForm) {
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const searchName = searchNameInput ? searchNameInput.value.trim() : '';
-            const dateSearchType = dateSearchTypeSelect ? dateSearchTypeSelect.value : '';
+            const searchReligion = searchReligionInput ? searchReligionInput.value.trim() : '';
             const searchDay = searchDayInput ? searchDayInput.value.trim() : '';
             const searchMonth = searchMonthInput ? searchMonthInput.value.trim() : '';
             const searchYear = searchYearInput ? searchYearInput.value.trim() : '';
@@ -99,45 +56,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Validate date search type is required
-            if (!dateSearchType) {
-                errorMessage.textContent = 'يرجى اختيار نوع البحث بالتاريخ';
+            // At least one date field should be filled
+            if (!searchDay && !searchMonth && !searchYear) {
+                errorMessage.textContent = 'يرجى إدخال على الأقل يوم أو شهر أو سنة';
                 errorMessage.style.display = 'block';
                 return;
             }
             
-            // Validate date inputs based on search type
-            if (dateSearchType === 'day') {
-                if (!searchDay) {
-                    errorMessage.textContent = 'يرجى إدخال اليوم';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-                // Month and year are optional for day search
-            } else if (dateSearchType === 'month') {
-                if (!searchMonth) {
-                    errorMessage.textContent = 'يرجى إدخال الشهر';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-                // Year is optional for month search
-            } else if (dateSearchType === 'year') {
-                if (!searchYear) {
-                    errorMessage.textContent = 'يرجى إدخال السنة';
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-            }
-            
             const dateFilter = {
-                type: dateSearchType,
                 day: searchDay,
                 month: searchMonth,
                 year: searchYear
             };
             
-            console.log('Form submitted, searching for:', { name: searchName, dateFilter: dateFilter });
-            performSearch(searchName, dateFilter, false);
+            console.log('Form submitted, searching for:', { name: searchName, religion: searchReligion, dateFilter: dateFilter });
+            performSearch(searchName, searchReligion, dateFilter, false);
         });
     }
     
@@ -238,16 +171,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 isLoading = false;
 
                 // If there was a previous search, re-run it
-                if (searchNameInput && searchNameInput.value.trim() && dateSearchTypeSelect && dateSearchTypeSelect.value) {
+                if (searchNameInput && searchNameInput.value.trim()) {
                     const searchName = searchNameInput.value.trim();
-                    const dateSearchType = dateSearchTypeSelect.value;
+                    const searchReligion = searchReligionInput ? searchReligionInput.value.trim() : '';
                     const dateFilter = {
-                        type: dateSearchType,
                         day: searchDayInput ? searchDayInput.value.trim() : '',
                         month: searchMonthInput ? searchMonthInput.value.trim() : '',
                         year: searchYearInput ? searchYearInput.value.trim() : ''
                     };
-                    performSearch(searchName, dateFilter, true);
+                    performSearch(searchName, searchReligion, dateFilter, true);
                 }
             })
             .catch(error => {
@@ -266,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to perform search
-    function performSearch(searchName, dateFilter, silent = false) {
+    function performSearch(searchName, searchReligion, dateFilter, silent = false) {
         // Always re-enable button at start (in case it was disabled)
         if (searchBtn) {
             searchBtn.disabled = false;
@@ -310,14 +242,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            console.log('Starting search for:', { name: searchName, dateFilter: dateFilter });
+            console.log('Starting search for:', { name: searchName, religion: searchReligion, dateFilter: dateFilter });
             console.log('Total rows in sheet:', rows.length);
 
             // Normalize search name (remove extra spaces, convert to lowercase, handle Arabic text)
             const normalizedSearchName = searchName ? searchName.toLowerCase().trim().replace(/\s+/g, ' ') : '';
             
+            // Normalize search religion/debt
+            const normalizedSearchReligion = searchReligion ? searchReligion.toLowerCase().trim().replace(/\s+/g, ' ') : '';
+            
             // Extract date filter values
-            const dateSearchType = dateFilter ? dateFilter.type : '';
             const searchDay = dateFilter ? dateFilter.day : '';
             const searchMonth = dateFilter ? dateFilter.month : '';
             const searchYear = dateFilter ? dateFilter.year : '';
@@ -461,37 +395,55 @@ document.addEventListener('DOMContentLoaded', function() {
                 return null;
             }
             
-            // Helper function to check if date matches filter
-            function dateMatchesFilter(dateStr, filterType, filterDay, filterMonth, filterYear) {
-                if (!filterType || !dateStr) return true; // No filter, match all
+            // Helper function to check if date matches filter (day, month, year all checked)
+            function dateMatchesFilter(dateStr, filterDay, filterMonth, filterYear) {
+                if (!dateStr) return false; // No date in record, no match
+                
+                // If no date filters provided, don't filter by date
+                if (!filterDay && !filterMonth && !filterYear) {
+                    return true;
+                }
                 
                 const dateParts = parseDate(dateStr);
                 if (!dateParts) {
                     // If we can't parse the date, try simple string matching as fallback
                     const dateStrLower = String(dateStr).toLowerCase().trim();
-                    if (filterType === 'year' && filterYear) {
-                        return dateStrLower.includes(filterYear);
+                    if (filterYear && dateStrLower.includes(filterYear)) {
+                        return true; // Year found in string
                     }
                     return false; // Can't parse date and no fallback match
                 }
                 
-                if (filterType === 'day') {
-                    // Match if day matches (required), and month/year if provided (optional)
-                    const dayMatch = filterDay ? dateParts.day === parseInt(filterDay) : false;
-                    const monthMatch = !filterMonth || dateParts.month === parseInt(filterMonth);
-                    const yearMatch = !filterYear || dateParts.year === parseInt(filterYear);
-                    return dayMatch && monthMatch && yearMatch;
-                } else if (filterType === 'month') {
-                    // Match if month matches (required), and year if provided (optional)
-                    const monthMatch = filterMonth ? dateParts.month === parseInt(filterMonth) : false;
-                    const yearMatch = !filterYear || dateParts.year === parseInt(filterYear);
-                    return monthMatch && yearMatch;
-                } else if (filterType === 'year') {
-                    // Match if year matches
-                    return filterYear ? dateParts.year === parseInt(filterYear) : false;
-                }
+                // Check day (if provided)
+                const dayMatch = !filterDay || dateParts.day === parseInt(filterDay);
                 
-                return true;
+                // Check month (if provided)
+                const monthMatch = !filterMonth || dateParts.month === parseInt(filterMonth);
+                
+                // Check year (if provided)
+                const yearMatch = !filterYear || dateParts.year === parseInt(filterYear);
+                
+                // All provided filters must match
+                return dayMatch && monthMatch && yearMatch;
+            }
+            
+            // Helper function to check if religion/debt matches
+            function religionMatches(religionValue, searchTerm) {
+                if (!searchTerm) return true; // No search term, match all
+                if (!religionValue) return false; // No religion value, no match
+                
+                const normalizedValue = String(religionValue).toLowerCase().trim();
+                const normalizedSearch = searchTerm.toLowerCase().trim();
+                
+                // Remove currency symbols and formatting for comparison
+                const cleanValue = normalizedValue.replace(/[^\d.]/g, '');
+                const cleanSearch = normalizedSearch.replace(/[^\d.]/g, '');
+                
+                // Check if search term is contained in the value or vice versa
+                return normalizedValue.includes(normalizedSearch) || 
+                       normalizedSearch.includes(normalizedValue) ||
+                       cleanValue.includes(cleanSearch) ||
+                       cleanSearch.includes(cleanValue);
             }
             
             // Start searching from data rows (skip header and empty rows)
@@ -524,18 +476,59 @@ document.addEventListener('DOMContentLoaded', function() {
                                  normalizedSearchName.startsWith(nameValueLower);
                 }
                 
-                // Check the date column for matches
-                let dateMatches = false;
-                if (dateSearchType && dateColumnIndex >= 0) {
-                    const dateCell = row.c[dateColumnIndex];
-                    if (dateCell && dateCell.v !== null && dateCell.v !== undefined) {
-                        const dateValue = String(dateCell.v).trim();
-                        dateMatches = dateMatchesFilter(dateValue, dateSearchType, searchDay, searchMonth, searchYear);
+                // Get religion/debt value
+                let religionValue = '';
+                if (religionColumnIndex >= 0) {
+                    const religionCell = row.c[religionColumnIndex];
+                    if (religionCell && religionCell.v !== null && religionCell.v !== undefined) {
+                        religionValue = String(religionCell.v).trim();
                     }
                 }
                 
-                // Both name AND date must match
-                if (nameMatches && dateMatches) {
+                // If no religion column found, try to calculate from price columns
+                if (!religionValue) {
+                    let totalDebt = 0;
+                    let priceFound = false;
+                    // Check columns that might contain prices (usually column 4 or 5)
+                    for (let i = 3; i < Math.min(6, row.c.length); i++) {
+                        const cell = row.c[i];
+                        if (cell && cell.v !== null && cell.v !== undefined) {
+                            const val = String(cell.v).trim();
+                            // Check if it's a number (price)
+                            const numVal = parseFloat(val.replace(/[^\d.]/g, ''));
+                            if (!isNaN(numVal) && numVal > 0 && numVal < 1000000) {
+                                totalDebt += numVal;
+                                priceFound = true;
+                            }
+                        }
+                    }
+                    // If we found a price, use it as religion value
+                    if (priceFound && totalDebt > 0) {
+                        religionValue = totalDebt.toLocaleString('ar-SA') + ' دينار';
+                    }
+                }
+                
+                // Check if religion/debt matches
+                let religionMatchesFilter = true;
+                if (normalizedSearchReligion) {
+                    religionMatchesFilter = religionMatches(religionValue, normalizedSearchReligion);
+                }
+                
+                // Check the date column for matches
+                let dateMatches = false;
+                if (dateColumnIndex >= 0) {
+                    const dateCell = row.c[dateColumnIndex];
+                    if (dateCell && dateCell.v !== null && dateCell.v !== undefined) {
+                        const dateValue = String(dateCell.v).trim();
+                        dateMatches = dateMatchesFilter(dateValue, searchDay, searchMonth, searchYear);
+                    }
+                } else {
+                    // If no date column, consider it a match if no date filters provided
+                    dateMatches = !searchDay && !searchMonth && !searchYear;
+                }
+                
+                // Name AND date AND religion (if provided) must match
+                if (nameMatches && dateMatches && religionMatchesFilter) {
                     // Get all data from this row, prioritizing name, date, and religion
                     const rowData = {};
                     
@@ -552,33 +545,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                     
-                    // Always include religion/debt if available
-                    if (religionColumnIndex >= 0) {
-                        const religionCell = row.c[religionColumnIndex];
-                        if (religionCell && religionCell.v !== null && religionCell.v !== undefined) {
-                            rowData['الدين'] = String(religionCell.v).trim();
-                        }
-                    } else {
-                        // If no religion column found, try to calculate from price columns
-                        let totalDebt = 0;
-                        let priceFound = false;
-                        // Check columns that might contain prices (usually column 4 or 5)
-                        for (let i = 3; i < Math.min(6, row.c.length); i++) {
-                            const cell = row.c[i];
-                            if (cell && cell.v !== null && cell.v !== undefined) {
-                                const val = String(cell.v).trim();
-                                // Check if it's a number (price)
-                                const numVal = parseFloat(val.replace(/[^\d.]/g, ''));
-                                if (!isNaN(numVal) && numVal > 0 && numVal < 1000000) {
-                                    totalDebt += numVal;
-                                    priceFound = true;
-                                }
-                            }
-                        }
-                        // If we found a price, add it as الدين
-                        if (priceFound && totalDebt > 0) {
-                            rowData['الدين'] = totalDebt.toLocaleString('ar-SA') + ' دينار';
-                        }
+                    // Always include religion/debt (we already calculated it above)
+                    if (religionValue) {
+                        rowData['الدين'] = religionValue;
                     }
                     
                     // Add other columns if needed
@@ -612,10 +581,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Display results
             if (matches.length > 0) {
-                displaySearchResults(matches, searchName, dateFilter);
+                displaySearchResults(matches, searchName, searchReligion, dateFilter);
             } else {
                 showNoResults();
-                console.log('No matches found for:', { name: searchName, dateFilter: dateFilter });
+                console.log('No matches found for:', { name: searchName, religion: searchReligion, dateFilter: dateFilter });
             }
 
         } catch (error) {
@@ -640,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to display search results
-    function displaySearchResults(matches, searchName, dateFilter) {
+    function displaySearchResults(matches, searchName, searchReligion, dateFilter) {
         searchResults.style.display = 'block';
         noResults.style.display = 'none';
         errorMessage.style.display = 'none';

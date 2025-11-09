@@ -56,7 +56,7 @@
     <section class="page-header">
         <div class="container">
             <h1>استعلام الدين</h1>
-            <p>ابحث عن الدين بالاسم والتاريخ (يوم، شهر، أو سنة)</p>
+            <p>ابحث عن الدين بالاسم والتاريخ والدين (يوم، شهر، سنة)</p>
         </div>
     </section>
 
@@ -78,47 +78,51 @@
                             >
                         </div>
                         <div class="form-group">
-                            <label for="dateSearchType">نوع البحث بالتاريخ</label>
-                            <select id="dateSearchType" name="dateSearchType" class="date-search-type" required>
-                                <option value="">اختر نوع البحث</option>
-                                <option value="day">بحث باليوم</option>
-                                <option value="month">بحث بالشهر</option>
-                                <option value="year">بحث بالسنة</option>
-                            </select>
+                            <label for="searchReligion">الدين (مبلغ الدين)</label>
+                            <input 
+                                type="text" 
+                                id="searchReligion" 
+                                name="searchReligion" 
+                                placeholder="أدخل مبلغ الدين للبحث..." 
+                                autocomplete="off"
+                            >
                         </div>
-                        <div id="dateFiltersContainer" style="display: none;">
-                            <div class="form-group" id="daySearchGroup" style="display: none;">
-                                <label for="searchDay">اليوم</label>
-                                <input 
-                                    type="number" 
-                                    id="searchDay" 
-                                    name="searchDay" 
-                                    min="1" 
-                                    max="31" 
-                                    placeholder="يوم (1-31)"
-                                >
-                            </div>
-                            <div class="form-group" id="monthSearchGroup" style="display: none;">
-                                <label for="searchMonth">الشهر</label>
-                                <input 
-                                    type="number" 
-                                    id="searchMonth" 
-                                    name="searchMonth" 
-                                    min="1" 
-                                    max="12" 
-                                    placeholder="شهر (1-12)"
-                                >
-                            </div>
-                            <div class="form-group" id="yearSearchGroup" style="display: none;">
-                                <label for="searchYear">السنة</label>
-                                <input 
-                                    type="number" 
-                                    id="searchYear" 
-                                    name="searchYear" 
-                                    min="2000" 
-                                    max="2100" 
-                                    placeholder="سنة (مثال: 2024)"
-                                >
+                        <div class="form-group">
+                            <label>التاريخ</label>
+                            <div class="date-inputs-row">
+                                <div class="form-group date-input-group">
+                                    <label for="searchDay">اليوم</label>
+                                    <input 
+                                        type="number" 
+                                        id="searchDay" 
+                                        name="searchDay" 
+                                        min="1" 
+                                        max="31" 
+                                        placeholder="يوم"
+                                    >
+                                </div>
+                                <div class="form-group date-input-group">
+                                    <label for="searchMonth">الشهر</label>
+                                    <input 
+                                        type="number" 
+                                        id="searchMonth" 
+                                        name="searchMonth" 
+                                        min="1" 
+                                        max="12" 
+                                        placeholder="شهر"
+                                    >
+                                </div>
+                                <div class="form-group date-input-group">
+                                    <label for="searchYear">السنة</label>
+                                    <input 
+                                        type="number" 
+                                        id="searchYear" 
+                                        name="searchYear" 
+                                        min="2000" 
+                                        max="2100" 
+                                        placeholder="سنة"
+                                    >
+                                </div>
                             </div>
                         </div>
                         <button type="submit" class="btn-primary" id="searchBtn">

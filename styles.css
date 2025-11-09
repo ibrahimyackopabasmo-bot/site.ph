@@ -1212,23 +1212,26 @@ body {
     box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
 }
 
-#dateFiltersContainer {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-top: 1rem;
-    border: 2px solid #e9ecef;
+.date-inputs-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
-#dateFiltersContainer .form-group {
-    margin-bottom: 1rem;
+.date-input-group {
+    flex: 1;
+    min-width: 120px;
 }
 
-#dateFiltersContainer .form-group:last-child {
-    margin-bottom: 0;
+.date-input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+    font-weight: 500;
+    font-size: 0.9rem;
 }
 
-.search-form input[type="number"] {
+.date-input-group input {
     width: 100%;
     padding: 0.75rem;
     border: 2px solid #ddd;
@@ -1236,11 +1239,22 @@ body {
     font-size: 1rem;
 }
 
-.search-form input[type="number"]:focus {
+.date-input-group input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
 }
+
+@media (max-width: 768px) {
+    .date-inputs-row {
+        flex-direction: column;
+    }
+    
+    .date-input-group {
+        min-width: 100%;
+    }
+}
+
 
 /* Autocomplete Styles */
 .autocomplete-wrapper {
