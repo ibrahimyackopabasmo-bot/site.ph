@@ -39,10 +39,20 @@ function getCurrentTheme() {
 document.addEventListener('DOMContentLoaded', function() {
     initTheme();
     
+    // Update user info in settings menu
+    updateSettingsUserInfo();
+    
     // Settings menu toggle
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsMenu = document.getElementById('settingsMenu');
     const settingsClose = document.getElementById('settingsClose');
+    
+    // Update user info when settings menu is opened
+    if (settingsBtn && settingsMenu) {
+        settingsBtn.addEventListener('click', function() {
+            updateSettingsUserInfo();
+        });
+    }
     
     if (settingsBtn && settingsMenu) {
         settingsBtn.addEventListener('click', function(e) {
@@ -256,6 +266,15 @@ function initializeUploadForms() {
 }
 
 
+// Check if user is guest (from auth.js)
+function isGuest() {
+    if (typeof window.isGuest === 'function') {
+        return window.isGuest();
+    }
+    const user = getCurrentUser();
+    return user && user.isGuest === true;
+}
+
 // Update user info in settings menu
 function updateSettingsUserInfo() {
     if (typeof getCurrentUser === 'function') {
@@ -264,12 +283,24 @@ function updateSettingsUserInfo() {
         const userRoleDisplay = document.getElementById('settingsUserRole');
         
         if (usernameDisplay && user) {
-            usernameDisplay.textContent = user.username || 'غير محدد';
+            if (isGuest()) {
+                usernameDisplay.textContent = 'زائر';
+            } else {
+                usernameDisplay.textContent = user.username || 'غير محدد';
+            }
         }
         
         if (userRoleDisplay && user) {
-            userRoleDisplay.textContent = user.isAdmin ? 'مسؤول' : 'مستخدم';
-            userRoleDisplay.style.color = user.isAdmin ? '#e74c3c' : '#3498db';
+            if (isGuest()) {
+                userRoleDisplay.textContent = 'زائر';
+                userRoleDisplay.style.color = '#95a5a6';
+            } else if (user.isAdmin) {
+                userRoleDisplay.textContent = 'مسؤول';
+                userRoleDisplay.style.color = '#e74c3c';
+            } else {
+                userRoleDisplay.textContent = 'مستخدم';
+                userRoleDisplay.style.color = '#3498db';
+            }
         }
     }
 }
