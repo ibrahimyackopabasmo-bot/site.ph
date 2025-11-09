@@ -56,7 +56,7 @@
     <section class="page-header">
         <div class="container">
             <h1>استعلام الدين</h1>
-            <p>ابحث عن الدين بالتاريخ (يوم، شهر، أو سنة)</p>
+            <p>ابحث عن الدين بالاسم والتاريخ (يوم، شهر، أو سنة)</p>
         </div>
     </section>
 
@@ -67,19 +67,20 @@
                     <h2>ابحث عن الدين</h2>
                     <form id="searchForm" class="search-form">
                         <div class="form-group">
-                            <label for="searchReligion">الدين (مبلغ الدين)</label>
+                            <label for="searchName">الاسم الكامل</label>
                             <input 
                                 type="text" 
-                                id="searchReligion" 
-                                name="searchReligion" 
-                                placeholder="أدخل مبلغ الدين للبحث..." 
+                                id="searchName" 
+                                name="searchName" 
+                                placeholder="أدخل الاسم الكامل للبحث..." 
                                 autocomplete="off"
+                                required
                             >
                         </div>
                         <div class="form-group">
                             <label for="dateSearchType">نوع البحث بالتاريخ</label>
-                            <select id="dateSearchType" name="dateSearchType" class="date-search-type">
-                                <option value="">لا يوجد</option>
+                            <select id="dateSearchType" name="dateSearchType" class="date-search-type" required>
+                                <option value="">اختر نوع البحث</option>
                                 <option value="day">بحث باليوم</option>
                                 <option value="month">بحث بالشهر</option>
                                 <option value="year">بحث بالسنة</option>
