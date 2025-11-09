@@ -808,6 +808,9 @@ document.addEventListener('DOMContentLoaded', function() {
         let headerRowIndex = -1;
         let dataStartIndex = 10;
         const columnHeaders = {};
+        let nameColumnIndex = 0;
+        let dateColumnIndex = -1;
+        let religionColumnIndex = -1;
         
         for (let i = 0; i < Math.min(20, rows.length); i++) {
             const row = rows[i];
@@ -819,10 +822,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         headerRowIndex = i;
                         dataStartIndex = i + 1;
                         
-                        // Extract headers
+                        // Extract headers and find important columns
                         row.c.forEach((cell, idx) => {
                             if (cell && cell.v !== null && cell.v !== undefined) {
-                                columnHeaders[idx] = String(cell.v).trim();
+                                const headerLabel = String(cell.v).trim();
+                                columnHeaders[idx] = headerLabel;
+                                
+                                // Find date column
+                                if (headerLabel.includes('التاريخ') || headerLabel.includes('تاريخ')) {
+                                    dateColumnIndex = idx;
+                                }
+                                // Find religion/debt column
+                                if (headerLabel.includes('الدين') || headerLabel.includes('دين')) {
+                                    religionColumnIndex = idx;
+                                }
                             } else {
                                 columnHeaders[idx] = `العمود ${idx + 1}`;
                             }
@@ -841,18 +854,27 @@ document.addEventListener('DOMContentLoaded', function() {
             columnHeaders[3] = 'التاريخ';
             columnHeaders[4] = 'نوع الورق';
             columnHeaders[5] = 'السعر';
+            dateColumnIndex = 3;
+            // Try to find religion column
+            if (columnHeaders[5] && (columnHeaders[5].includes('السعر') || columnHeaders[5].includes('الدين'))) {
+                religionColumnIndex = 5;
+            }
         }
         
-        // Build table header
+        // Build table header - add action column
         let headerHtml = '<tr>';
         Object.keys(columnHeaders).forEach(key => {
             headerHtml += `<th>${escapeHtml(columnHeaders[key])}</th>`;
         });
+        headerHtml += '<th>الإجراءات</th>'; // Add Actions column
         headerHtml += '</tr>';
         
         if (tableHeader) {
             tableHeader.innerHTML = headerHtml;
         }
+        
+        // Store row data for button clicks
+        window.tableRowData = window.tableRowData || {};
         
         // Build table body (limit to first 100 rows for performance)
         let bodyHtml = '';
@@ -864,12 +886,52 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!row || !row.c || row.c.length === 0) continue;
             
             // Skip if first cell (name) is empty
-            const nameCell = row.c[0];
+            const nameCell = row.c[nameColumnIndex];
             if (!nameCell || nameCell.v === null || nameCell.v === undefined || String(nameCell.v).trim().length < 2) {
                 continue;
             }
             
-            bodyHtml += '<tr>';
+            const rowId = `row-${i}`;
+            const nameValue = String(nameCell.v).trim();
+            
+            // Get religion/debt value
+            let religionValue = '';
+            if (religionColumnIndex >= 0 && row.c[religionColumnIndex]) {
+                const religionCell = row.c[religionColumnIndex];
+                if (religionCell && religionCell.v !== null && religionCell.v !== undefined) {
+                    religionValue = String(religionCell.v).trim();
+                }
+            }
+            
+            // If no religion column found, try to calculate from price columns
+            if (!religionValue) {
+                let totalDebt = 0;
+                let priceFound = false;
+                for (let j = 3; j < Math.min(6, row.c.length); j++) {
+                    const cell = row.c[j];
+                    if (cell && cell.v !== null && cell.v !== undefined) {
+                        const val = String(cell.v).trim();
+                        const numVal = parseFloat(val.replace(/[^\d.]/g, ''));
+                        if (!isNaN(numVal) && numVal > 0 && numVal < 1000000) {
+                            totalDebt += numVal;
+                            priceFound = true;
+                        }
+                    }
+                }
+                if (priceFound && totalDebt > 0) {
+                    religionValue = totalDebt.toLocaleString('ar-SA') + ' دينار';
+                }
+            }
+            
+            // Store row data for button click
+            window.tableRowData[rowId] = {
+                name: nameValue,
+                religion: religionValue,
+                date: dateColumnIndex >= 0 && row.c[dateColumnIndex] && row.c[dateColumnIndex].v ? String(row.c[dateColumnIndex].v).trim() : '',
+                rowIndex: i
+            };
+            
+            bodyHtml += `<tr id="${rowId}">`;
             Object.keys(columnHeaders).forEach(key => {
                 const cell = row.c[parseInt(key)];
                 let cellValue = '';
@@ -878,12 +940,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 bodyHtml += `<td>${escapeHtml(cellValue)}</td>`;
             });
+            // Add action button
+            bodyHtml += `<td><button class="btn-show-religion" data-row-id="${rowId}">عرض الدين</button></td>`;
             bodyHtml += '</tr>';
             rowCount++;
         }
         
         if (tableBody) {
             tableBody.innerHTML = bodyHtml;
+            
+            // Add click handlers for religion buttons after table is rendered
+            setTimeout(() => {
+                const buttons = tableBody.querySelectorAll('.btn-show-religion');
+                buttons.forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const rowId = this.getAttribute('data-row-id');
+                        if (rowId && window.tableRowData && window.tableRowData[rowId]) {
+                            showReligionInfo(rowId);
+                        }
+                    });
+                });
+            }, 100);
         }
         
         // Show table if we have data (but respect password and toggle state)
@@ -911,6 +990,90 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+
+    // Function to show religion/debt information when button is clicked
+    function showReligionInfo(rowId) {
+        if (!window.tableRowData || !window.tableRowData[rowId]) {
+            alert('لا توجد بيانات متاحة');
+            return;
+        }
+        
+        const rowData = window.tableRowData[rowId];
+        const religionInfo = rowData.religion || 'غير محدد';
+        const name = rowData.name || 'غير محدد';
+        const date = rowData.date || 'غير محدد';
+        
+        // Create or update religion info modal
+        let religionModal = document.getElementById('religionInfoModal');
+        if (!religionModal) {
+            religionModal = document.createElement('div');
+            religionModal.id = 'religionInfoModal';
+            religionModal.className = 'religion-info-modal';
+            religionModal.innerHTML = `
+                <div class="religion-info-content">
+                    <span class="religion-info-close">&times;</span>
+                    <h2>معلومات الدين</h2>
+                    <div class="religion-info-body">
+                        <div class="religion-info-field">
+                            <strong>الاسم:</strong>
+                            <span id="religionInfoName">${escapeHtml(name)}</span>
+                        </div>
+                        <div class="religion-info-field">
+                            <strong>التاريخ:</strong>
+                            <span id="religionInfoDate">${escapeHtml(date)}</span>
+                        </div>
+                        <div class="religion-info-field">
+                            <strong>الدين:</strong>
+                            <span id="religionInfoAmount" class="religion-amount">${escapeHtml(religionInfo)}</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary religion-info-close-btn">إغلاق</button>
+                </div>
+            `;
+            document.body.appendChild(religionModal);
+            
+            // Add close handlers
+            const closeBtn = religionModal.querySelector('.religion-info-close');
+            const closeBtn2 = religionModal.querySelector('.religion-info-close-btn');
+            const closeModal = () => {
+                religionModal.style.display = 'none';
+            };
+            
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (closeBtn2) closeBtn2.addEventListener('click', closeModal);
+            
+            // Close when clicking outside
+            religionModal.addEventListener('click', function(e) {
+                if (e.target === religionModal) {
+                    closeModal();
+                }
+            });
+            
+            // Close with ESC key
+            const escHandler = function(e) {
+                if (e.key === 'Escape' && religionModal.style.display !== 'none') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+        
+        // Update modal content
+        const nameEl = document.getElementById('religionInfoName');
+        const dateEl = document.getElementById('religionInfoDate');
+        const amountEl = document.getElementById('religionInfoAmount');
+        
+        if (nameEl) nameEl.textContent = name;
+        if (dateEl) dateEl.textContent = date;
+        if (amountEl) amountEl.textContent = religionInfo;
+        
+        // Show modal
+        religionModal.style.display = 'flex';
+    }
+    
+    // Make function available globally
+    window.showReligionInfo = showReligionInfo;
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', function() {
