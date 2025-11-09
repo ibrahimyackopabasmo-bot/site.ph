@@ -86,18 +86,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Upload work button (show only for admins)
+    // Upload work button (visible to all users)
     const uploadWorkBtn = document.getElementById('uploadWorkBtn');
     const uploadWorkSection = document.getElementById('uploadWorkSection');
     if (uploadWorkSection) {
-        if (typeof isAdmin === 'function' && isAdmin()) {
-            uploadWorkSection.style.display = 'block';
-            // Add pulse animation effect
-            if (uploadWorkBtn) {
-                uploadWorkBtn.classList.add('pulse');
-            }
-        } else {
-            uploadWorkSection.style.display = 'none';
+        // Show upload section to all authenticated users
+        uploadWorkSection.style.display = 'block';
+        // Add pulse animation effect to draw attention
+        if (uploadWorkBtn) {
+            uploadWorkBtn.classList.add('pulse');
         }
     }
     
@@ -348,15 +345,8 @@ function handleWorkUpload() {
         return;
     }
     
-    // Check if user is admin (only admins can upload)
-    if (typeof isAdmin === 'function' && !isAdmin()) {
-        if (uploadError) {
-            uploadError.textContent = 'ليس لديك صلاحية لرفع الأعمال. يجب أن تكون مسؤولاً.';
-            uploadError.style.display = 'block';
-            uploadError.classList.add('shake');
-        }
-        return;
-    }
+    // All authenticated users can upload work (no admin check needed)
+    // Removed admin-only restriction per user request
     
     // Show loading state
     if (uploadSubmitBtn) {
