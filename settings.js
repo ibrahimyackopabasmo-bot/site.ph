@@ -115,6 +115,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 uploadModal.style.display = 'flex';
                 // Add entrance animation
                 uploadModal.style.animation = 'fadeIn 0.3s ease';
+                
+                // Clear any previous errors/success messages
+                const uploadError = document.getElementById('uploadError');
+                const uploadSuccess = document.getElementById('uploadSuccess');
+                if (uploadError) {
+                    uploadError.style.display = 'none';
+                    uploadError.classList.remove('shake');
+                }
+                if (uploadSuccess) {
+                    uploadSuccess.style.display = 'none';
+                    uploadSuccess.classList.remove('show');
+                }
+                
+                // Clear preview if exists
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                if (previewContainer) {
+                    previewContainer.classList.remove('show');
+                    previewContainer.style.display = 'none';
+                    const previewImg = document.getElementById('imagePreview');
+                    if (previewImg) previewImg.src = '';
+                }
+                
+                // Initialize upload form after modal opens
+                setTimeout(() => {
+                    initializeUploadForms();
+                }, 100);
             }
         });
     }
