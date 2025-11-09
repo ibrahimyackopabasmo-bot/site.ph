@@ -39,6 +39,9 @@ function getCurrentTheme() {
 document.addEventListener('DOMContentLoaded', function() {
     initTheme();
     
+    // Initialize user info in settings menu (if menu is visible)
+    updateSettingsUserInfo();
+    
     // Settings menu toggle
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsMenu = document.getElementById('settingsMenu');
@@ -48,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
         settingsBtn.addEventListener('click', function(e) {
             e.preventDefault();
             settingsMenu.style.display = 'flex';
-            // Update user info in settings
+            // Update user info in settings when menu opens
             updateSettingsUserInfo();
         });
     }
