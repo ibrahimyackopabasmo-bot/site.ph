@@ -3,6 +3,10 @@ const REFRESH_INTERVAL = 80000; // 80 seconds in milliseconds
 // Use server-side proxy to avoid CORS issues
 const GOOGLE_SHEETS_API_URL = '/api/google-sheets';
 
+// Password Configuration - Change this password as needed
+const TABLE_PASSWORD = 'admin123'; // Change this to your desired password
+const PASSWORD_STORAGE_KEY = 'table_access_granted';
+
 // Global variables
 let sheetData = null;
 let refreshIntervalId = null;
@@ -29,8 +33,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const tableHeader = document.getElementById('tableHeader');
     const tableBody = document.getElementById('tableBody');
     const toggleTableBtn = document.getElementById('toggleTableBtn');
+    const passwordModal = document.getElementById('passwordModal');
+    const passwordForm = document.getElementById('passwordForm');
+    const tablePasswordInput = document.getElementById('tablePassword');
+    const passwordError = document.getElementById('passwordError');
+    const passwordModalClose = document.querySelector('.password-modal-close');
+    const passwordCancelBtn = document.querySelector('.password-cancel-btn');
     
     let tableVisible = false;
+    let isPasswordVerified = false;
+    
+    // Check if password was already verified in this session
+    function checkPasswordStatus() {
+        const stored = sessionStorage.getItem(PASSWORD_STORAGE_KEY);
+        if (stored === 'true') {
+            isPasswordVerified = true;
+            if (toggleTableBtn) {
+                toggleTableBtn.textContent = 'عرض/إخفاء الجدول';
+            }
+        }
+    }
+    
+    // Initialize password status check
+    checkPasswordStatus();
 
     // Load sheet data on page load
     // Show loading indicator initially
@@ -73,9 +98,136 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     
-    // Toggle sheet data table visibility
+    // Password form submission
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const enteredPassword = tablePasswordInput ? tablePasswordInput.value.trim() : '';
+            
+            if (!enteredPassword) {
+                if (passwordError) {
+                    passwordError.textContent = 'يرجى إدخال كلمة المرور';
+                    passwordError.style.display = 'block';
+                }
+                return;
+            }
+            
+            // Check password
+            if (enteredPassword === TABLE_PASSWORD) {
+                // Password correct - grant access
+                isPasswordVerified = true;
+                sessionStorage.setItem(PASSWORD_STORAGE_KEY, 'true');
+                
+                // Hide modal
+                if (passwordModal) {
+                    passwordModal.style.display = 'none';
+                }
+                
+                // Clear password field
+                if (tablePasswordInput) {
+                    tablePasswordInput.value = '';
+                }
+                if (passwordError) {
+                    passwordError.style.display = 'none';
+                }
+                
+                // Update button text
+                if (toggleTableBtn) {
+                    toggleTableBtn.textContent = 'عرض/إخفاء الجدول';
+                }
+                
+                // Show table if it should be visible
+                if (tableVisible && sheetDataTable) {
+                    sheetDataTable.style.display = 'block';
+                    toggleTableBtn.textContent = 'إخفاء الجدول';
+                }
+            } else {
+                // Password incorrect
+                if (passwordError) {
+                    passwordError.textContent = 'كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.';
+                    passwordError.style.display = 'block';
+                }
+                if (tablePasswordInput) {
+                    tablePasswordInput.value = '';
+                    tablePasswordInput.focus();
+                }
+            }
+        });
+    }
+    
+    // Close password modal
+    if (passwordModalClose) {
+        passwordModalClose.addEventListener('click', function() {
+            if (passwordModal) {
+                passwordModal.style.display = 'none';
+            }
+            if (passwordError) {
+                passwordError.style.display = 'none';
+            }
+            if (tablePasswordInput) {
+                tablePasswordInput.value = '';
+            }
+        });
+    }
+    
+    if (passwordCancelBtn) {
+        passwordCancelBtn.addEventListener('click', function() {
+            if (passwordModal) {
+                passwordModal.style.display = 'none';
+            }
+            if (passwordError) {
+                passwordError.style.display = 'none';
+            }
+            if (tablePasswordInput) {
+                tablePasswordInput.value = '';
+            }
+        });
+    }
+    
+    // Close modal when clicking outside
+    if (passwordModal) {
+        passwordModal.addEventListener('click', function(e) {
+            if (e.target === passwordModal) {
+                passwordModal.style.display = 'none';
+                if (passwordError) {
+                    passwordError.style.display = 'none';
+                }
+                if (tablePasswordInput) {
+                    tablePasswordInput.value = '';
+                }
+            }
+        });
+    }
+    
+    // Close modal with ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && passwordModal && passwordModal.style.display !== 'none') {
+            passwordModal.style.display = 'none';
+            if (passwordError) {
+                passwordError.style.display = 'none';
+            }
+            if (tablePasswordInput) {
+                tablePasswordInput.value = '';
+            }
+        }
+    });
+    
+    // Toggle sheet data table visibility with password protection
     if (toggleTableBtn) {
         toggleTableBtn.addEventListener('click', function() {
+            // Check if password is verified
+            if (!isPasswordVerified) {
+                // Show password modal
+                if (passwordModal) {
+                    passwordModal.style.display = 'flex';
+                    if (tablePasswordInput) {
+                        tablePasswordInput.focus();
+                    }
+                }
+                return;
+            }
+            
+            // Password verified - toggle table
             if (sheetDataTable) {
                 tableVisible = !tableVisible;
                 if (tableVisible) {
@@ -146,12 +298,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Display full sheet data table (but keep it hidden by default)
                 displaySheetDataTable();
-                // Hide table by default initially
+                // Hide table by default initially (password required)
                 if (sheetDataTable) {
                     sheetDataTable.style.display = 'none';
                 }
+                // Update button text based on password status
                 if (toggleTableBtn) {
-                    toggleTableBtn.textContent = 'عرض الجدول';
+                    if (isPasswordVerified) {
+                        toggleTableBtn.textContent = 'عرض الجدول';
+                    } else {
+                        toggleTableBtn.textContent = 'عرض الجدول (يتطلب كلمة مرور)';
+                    }
                 }
                 
                 // Update status
@@ -729,10 +886,10 @@ document.addEventListener('DOMContentLoaded', function() {
             tableBody.innerHTML = bodyHtml;
         }
         
-        // Show table if we have data (but respect toggle state)
+        // Show table if we have data (but respect password and toggle state)
         if (sheetDataTable && rowCount > 0) {
-            // Only show if table was previously visible, otherwise keep it hidden
-            if (tableVisible) {
+            // Only show if password is verified AND table was previously visible
+            if (isPasswordVerified && tableVisible) {
                 sheetDataTable.style.display = 'block';
             } else {
                 sheetDataTable.style.display = 'none';
@@ -740,7 +897,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Enable toggle button
             if (toggleTableBtn) {
                 toggleTableBtn.disabled = false;
-                toggleTableBtn.textContent = tableVisible ? 'إخفاء الجدول' : 'عرض الجدول';
+                if (isPasswordVerified) {
+                    toggleTableBtn.textContent = tableVisible ? 'إخفاء الجدول' : 'عرض الجدول';
+                } else {
+                    toggleTableBtn.textContent = 'عرض الجدول (يتطلب كلمة مرور)';
+                }
             }
         } else {
             sheetDataTable.style.display = 'none';

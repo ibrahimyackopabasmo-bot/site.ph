@@ -1784,6 +1784,98 @@ footer {
 }
 
 /* Lightbox Modal */
+/* Password Modal */
+.password-modal {
+    display: none;
+    position: fixed;
+    z-index: 10002;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.3s ease;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-modal-content {
+    background-color: var(--white);
+    padding: 2rem;
+    border-radius: 15px;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: scaleIn 0.3s ease;
+}
+
+.password-modal-close {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.password-modal-close:hover {
+    color: var(--secondary-color);
+}
+
+.password-modal-content h2 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.password-modal-content p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.password-modal-content .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.password-modal-content input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.password-modal-content input[type="password"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+}
+
+.password-error {
+    background-color: #fee;
+    color: #c33;
+    padding: 0.75rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    border: 1px solid #fcc;
+}
+
+.password-modal-content .btn-primary,
+.password-modal-content .btn-secondary {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.password-cancel-btn {
+    margin-top: 0.5rem;
+}
+
 .lightbox-modal {
     display: none;
     position: fixed;
