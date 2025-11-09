@@ -108,20 +108,28 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Settings elements:', { settingsBtn, settingsMenu, settingsClose });
     
     if (settingsBtn) {
+        // Use capture phase to ensure this handler runs first
         settingsBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
             console.log('Settings button clicked');
             
             if (settingsMenu) {
                 console.log('Opening settings menu');
-                settingsMenu.style.display = 'flex';
+                // Force display flex with !important equivalent
+                settingsMenu.style.setProperty('display', 'flex', 'important');
+                // Also add a class to ensure it's visible
+                settingsMenu.classList.add('active');
                 // Update user info in settings when menu opens
-                updateSettingsUserInfo();
+                setTimeout(function() {
+                    updateSettingsUserInfo();
+                }, 50);
             } else {
                 console.error('Settings menu element not found');
             }
-        });
+            return false;
+        }, true); // Use capture phase
     } else {
         console.error('Settings button not found');
     }
@@ -131,18 +139,29 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
             console.log('Closing settings menu');
-            settingsMenu.style.display = 'none';
+            settingsMenu.style.setProperty('display', 'none', 'important');
+            settingsMenu.classList.remove('active');
         });
     }
     
-    // Close settings when clicking outside
+    // Close settings when clicking outside (but not on the content)
     if (settingsMenu) {
         settingsMenu.addEventListener('click', function(e) {
+            // Only close if clicking directly on the modal backdrop, not on content
             if (e.target === settingsMenu) {
                 console.log('Closing settings menu (clicked outside)');
-                settingsMenu.style.display = 'none';
+                settingsMenu.style.setProperty('display', 'none', 'important');
+                settingsMenu.classList.remove('active');
             }
         });
+        
+        // Prevent closing when clicking inside the settings content
+        const settingsContent = settingsMenu.querySelector('.settings-content');
+        if (settingsContent) {
+            settingsContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
     }
     
     // Theme toggle button
