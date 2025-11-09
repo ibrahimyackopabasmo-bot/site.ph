@@ -351,6 +351,51 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    // Function to manage cancelled debts - defined early so it can be used in performSearch
+    const CANCELLED_DEBTS_STORAGE_KEY = 'cancelled_debts';
+    
+    function getCancelledDebts() {
+        try {
+            const stored = localStorage.getItem(CANCELLED_DEBTS_STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            console.error('Error loading cancelled debts:', e);
+            return [];
+        }
+    }
+    
+    function saveCancelledDebts(cancelledDebts) {
+        try {
+            localStorage.setItem(CANCELLED_DEBTS_STORAGE_KEY, JSON.stringify(cancelledDebts));
+        } catch (e) {
+            console.error('Error saving cancelled debts:', e);
+        }
+    }
+    
+    function addCancelledDebt(name, date) {
+        const cancelledDebts = getCancelledDebts();
+        // Normalize name and date for consistent matching
+        const normalizedName = name.toLowerCase().trim().replace(/\s+/g, ' ');
+        const normalizedDate = (date || '').trim();
+        const key = `${normalizedName}|${normalizedDate}`;
+        
+        // Check if already cancelled
+        if (!cancelledDebts.includes(key)) {
+            cancelledDebts.push(key);
+            saveCancelledDebts(cancelledDebts);
+            console.log('Debt cancelled:', { name, date, key });
+        }
+    }
+    
+    function isDebtCancelled(name, date) {
+        const cancelledDebts = getCancelledDebts();
+        // Normalize name and date for consistent matching
+        const normalizedName = name.toLowerCase().trim().replace(/\s+/g, ' ');
+        const normalizedDate = (date || '').trim();
+        const key = `${normalizedName}|${normalizedDate}`;
+        return cancelledDebts.includes(key);
+    }
+
     // Function to perform search
     function performSearch(searchName, dateFilter, silent = false) {
         // Always re-enable button at start (in case it was disabled)
@@ -623,20 +668,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Name AND date must match
                 if (nameMatches && dateMatches) {
+                    // Get name and date values first to check if debt is cancelled
+                    const nameValue = nameCell && nameCell.v ? String(nameCell.v).trim() : '';
+                    let dateValue = '';
+                    if (dateColumnIndex >= 0) {
+                        const dateCell = row.c[dateColumnIndex];
+                        if (dateCell && dateCell.v !== null && dateCell.v !== undefined) {
+                            dateValue = String(dateCell.v).trim();
+                        }
+                    }
+                    
+                    // Check if this debt is cancelled - if so, skip it from search results
+                    if (isDebtCancelled(nameValue, dateValue)) {
+                        console.log('Skipping cancelled debt:', nameValue, dateValue);
+                        continue; // Skip this row, don't add to search results
+                    }
+                    
                     // Get all data from this row, prioritizing name, date, and religion
                     const rowData = {};
                     
                     // Always include name
-                    if (nameCell && nameCell.v !== null && nameCell.v !== undefined) {
-                        rowData['الاسم'] = String(nameCell.v).trim();
+                    if (nameValue) {
+                        rowData['الاسم'] = nameValue;
                     }
                     
                     // Always include date if available
-                    if (dateColumnIndex >= 0) {
-                        const dateCell = row.c[dateColumnIndex];
-                        if (dateCell && dateCell.v !== null && dateCell.v !== undefined) {
-                            rowData['التاريخ'] = String(dateCell.v).trim();
-                        }
+                    if (dateValue) {
+                        rowData['التاريخ'] = dateValue;
                     }
                     
                     // Always include religion/debt if available
@@ -690,8 +748,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     seenRowIndices.add(rowIndex);
                     
-                    const matchedName = nameCell && nameCell.v ? String(nameCell.v).trim() : 'غير محدد';
-                    console.log('Match found at row', rowIndex, ':', matchedName);
+                    console.log('Match found at row', rowIndex, ':', nameValue);
                 }
             }
             
@@ -861,12 +918,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Build table header - add action column
+        // Build table header - add cancel debt column
         let headerHtml = '<tr>';
         Object.keys(columnHeaders).forEach(key => {
             headerHtml += `<th>${escapeHtml(columnHeaders[key])}</th>`;
         });
-        headerHtml += '<th>الإجراءات</th>'; // Add Actions column
+        headerHtml += '<th>إلغاء الدين</th>'; // Add Cancel Debt column
         headerHtml += '</tr>';
         
         if (tableHeader) {
@@ -923,15 +980,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            // Get date value
+            const dateValue = dateColumnIndex >= 0 && row.c[dateColumnIndex] && row.c[dateColumnIndex].v ? String(row.c[dateColumnIndex].v).trim() : '';
+            
+            // Check if this debt is already cancelled
+            const isCancelled = isDebtCancelled(nameValue, dateValue);
+            const buttonText = isCancelled ? 'تم الإلغاء' : 'إلغاء الدين';
+            const buttonDisabled = isCancelled ? 'disabled' : '';
+            const buttonClass = isCancelled ? 'btn-cancel-debt cancelled-debt-btn' : 'btn-cancel-debt';
+            const rowStyle = isCancelled ? 'style="opacity: 0.5; text-decoration: line-through;"' : '';
+            
             // Store row data for button click
             window.tableRowData[rowId] = {
                 name: nameValue,
                 religion: religionValue,
-                date: dateColumnIndex >= 0 && row.c[dateColumnIndex] && row.c[dateColumnIndex].v ? String(row.c[dateColumnIndex].v).trim() : '',
+                date: dateValue,
                 rowIndex: i
             };
             
-            bodyHtml += `<tr id="${rowId}">`;
+            // Build table row with button
+            bodyHtml += `<tr id="${rowId}" ${rowStyle}>`;
             Object.keys(columnHeaders).forEach(key => {
                 const cell = row.c[parseInt(key)];
                 let cellValue = '';
@@ -940,8 +1008,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 bodyHtml += `<td>${escapeHtml(cellValue)}</td>`;
             });
-            // Add action button
-            bodyHtml += `<td><button class="btn-show-religion" data-row-id="${rowId}">عرض الدين</button></td>`;
+            bodyHtml += `<td><button class="${buttonClass}" data-row-id="${rowId}" ${buttonDisabled}>${buttonText}</button></td>`;
             bodyHtml += '</tr>';
             rowCount++;
         }
@@ -949,16 +1016,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tableBody) {
             tableBody.innerHTML = bodyHtml;
             
-            // Add click handlers for religion buttons after table is rendered
+            // Add click handlers for cancel debt buttons after table is rendered
             setTimeout(() => {
-                const buttons = tableBody.querySelectorAll('.btn-show-religion');
+                const buttons = tableBody.querySelectorAll('.btn-cancel-debt:not(.cancelled-debt-btn)');
                 buttons.forEach(btn => {
                     btn.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
                         const rowId = this.getAttribute('data-row-id');
                         if (rowId && window.tableRowData && window.tableRowData[rowId]) {
-                            showReligionInfo(rowId);
+                            cancelDebt(rowId);
                         }
                     });
                 });
@@ -991,89 +1058,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Function to show religion/debt information when button is clicked
-    function showReligionInfo(rowId) {
+    // Function to cancel debt when button is clicked
+    function cancelDebt(rowId) {
         if (!window.tableRowData || !window.tableRowData[rowId]) {
             alert('لا توجد بيانات متاحة');
             return;
         }
         
         const rowData = window.tableRowData[rowId];
-        const religionInfo = rowData.religion || 'غير محدد';
-        const name = rowData.name || 'غير محدد';
-        const date = rowData.date || 'غير محدد';
+        const name = rowData.name || '';
+        const date = rowData.date || '';
         
-        // Create or update religion info modal
-        let religionModal = document.getElementById('religionInfoModal');
-        if (!religionModal) {
-            religionModal = document.createElement('div');
-            religionModal.id = 'religionInfoModal';
-            religionModal.className = 'religion-info-modal';
-            religionModal.innerHTML = `
-                <div class="religion-info-content">
-                    <span class="religion-info-close">&times;</span>
-                    <h2>معلومات الدين</h2>
-                    <div class="religion-info-body">
-                        <div class="religion-info-field">
-                            <strong>الاسم:</strong>
-                            <span id="religionInfoName">${escapeHtml(name)}</span>
-                        </div>
-                        <div class="religion-info-field">
-                            <strong>التاريخ:</strong>
-                            <span id="religionInfoDate">${escapeHtml(date)}</span>
-                        </div>
-                        <div class="religion-info-field">
-                            <strong>الدين:</strong>
-                            <span id="religionInfoAmount" class="religion-amount">${escapeHtml(religionInfo)}</span>
-                        </div>
-                    </div>
-                    <button class="btn-primary religion-info-close-btn">إغلاق</button>
-                </div>
-            `;
-            document.body.appendChild(religionModal);
-            
-            // Add close handlers
-            const closeBtn = religionModal.querySelector('.religion-info-close');
-            const closeBtn2 = religionModal.querySelector('.religion-info-close-btn');
-            const closeModal = () => {
-                religionModal.style.display = 'none';
-            };
-            
-            if (closeBtn) closeBtn.addEventListener('click', closeModal);
-            if (closeBtn2) closeBtn2.addEventListener('click', closeModal);
-            
-            // Close when clicking outside
-            religionModal.addEventListener('click', function(e) {
-                if (e.target === religionModal) {
-                    closeModal();
-                }
-            });
-            
-            // Close with ESC key
-            const escHandler = function(e) {
-                if (e.key === 'Escape' && religionModal.style.display !== 'none') {
-                    closeModal();
-                    document.removeEventListener('keydown', escHandler);
-                }
-            };
-            document.addEventListener('keydown', escHandler);
+        if (!name) {
+            alert('لا يمكن إلغاء الدين: الاسم غير محدد');
+            return;
         }
         
-        // Update modal content
-        const nameEl = document.getElementById('religionInfoName');
-        const dateEl = document.getElementById('religionInfoDate');
-        const amountEl = document.getElementById('religionInfoAmount');
+        // Show confirmation dialog
+        const confirmed = confirm(`هل أنت متأكد من إلغاء دين "${name}"${date ? ' بتاريخ ' + date : ''}؟\n\nبعد الإلغاء، لن يظهر هذا الدين في نتائج البحث.`);
         
-        if (nameEl) nameEl.textContent = name;
-        if (dateEl) dateEl.textContent = date;
-        if (amountEl) amountEl.textContent = religionInfo;
-        
-        // Show modal
-        religionModal.style.display = 'flex';
+        if (confirmed) {
+            // Add to cancelled debts (normalize the values)
+            addCancelledDebt(name, date);
+            
+            // Update button appearance
+            const button = document.querySelector(`button[data-row-id="${rowId}"]`);
+            if (button) {
+                button.textContent = 'تم الإلغاء';
+                button.disabled = true;
+                button.classList.add('cancelled-debt-btn');
+            }
+            
+            // Update the row appearance
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.style.opacity = '0.5';
+                row.style.textDecoration = 'line-through';
+            }
+            
+            alert('تم إلغاء الدين بنجاح. لن يظهر هذا الدين في نتائج البحث عند البحث بالاسم والتاريخ.');
+        }
     }
     
     // Make function available globally
-    window.showReligionInfo = showReligionInfo;
+    window.cancelDebt = cancelDebt;
 
     // Cleanup on page unload
     window.addEventListener('beforeunload', function() {
