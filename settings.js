@@ -379,8 +379,15 @@ function handleWorkUpload() {
         if (previewContainer) {
             previewContainer.classList.remove('show');
             setTimeout(() => {
-                const previewImg = document.getElementById('imagePreview');
-                if (previewImg) previewImg.src = '';
+                const previewMedia = document.getElementById('previewMedia');
+                if (previewMedia) {
+                    if (previewMedia.tagName === 'VIDEO') {
+                        previewMedia.pause();
+                        previewMedia.src = '';
+                    } else if (previewMedia.tagName === 'IMG') {
+                        previewMedia.src = '';
+                    }
+                }
                 previewContainer.style.display = 'none';
             }, 300);
         }
