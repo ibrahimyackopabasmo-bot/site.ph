@@ -593,6 +593,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // This will be called after works are loaded
         setTimeout(attachLightboxToWorkItems, 1000);
         
+        // Make function globally available for refresh after upload
+        window.attachLightboxToWorkItems = attachLightboxToWorkItems;
+        
         // Close lightbox function
         function closeLightbox() {
             if (lightboxModal) {

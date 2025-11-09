@@ -308,8 +308,19 @@
                 console.log('Work grid element:', workGrid);
                 
                 if (works && works.length > 0 && workGrid) {
+                    // Remove duplicate uploaded works first (those with data-uploaded attribute)
+                    const existingUploaded = workGrid.querySelectorAll('.work-item[data-uploaded="true"]');
+                    existingUploaded.forEach(item => item.remove());
+                    
                     // Add uploaded works after existing works
                     works.forEach((work, index) => {
+                        // Skip if work with this ID already exists (static items)
+                        const existingWork = workGrid.querySelector(`.work-item[data-work-id="${work.id}"]`);
+                        if (existingWork) {
+                            console.log('Work already exists, skipping:', work.id);
+                            return;
+                        }
+                        
                         if (!work || !work.image) {
                             console.warn('Invalid work data at index', index, ':', work);
                             return; // Skip invalid works
@@ -375,6 +386,13 @@
                         console.log('Added work item:', work.title);
                     });
                     console.log('Finished adding works to grid');
+                    
+                    // Re-attach lightbox functionality to newly added items
+                    setTimeout(function() {
+                        if (typeof window.attachLightboxToWorkItems === 'function') {
+                            window.attachLightboxToWorkItems();
+                        }
+                    }, 100);
                 } else {
                     console.log('No works to display or work grid not found');
                 }
