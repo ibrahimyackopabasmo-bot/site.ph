@@ -535,45 +535,63 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 1000);
         }
         
-        // Get all work items
-        const workItems = document.querySelectorAll('.work-item');
-        
-        workItems.forEach(item => {
-            const workImage = item.querySelector('.work-image');
-            if (workImage) {
-                // Make sure it's clickable
-                workImage.style.cursor = 'pointer';
-                
-                workImage.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Check if it's a video or image
-                    const video = workImage.querySelector('video');
-                    const image = workImage.querySelector('img');
-                    
-                    if (video) {
-                        openVideoInLightbox(video);
-                    } else if (image) {
-                        // It's an image
-                        lightboxImage.src = image.src;
-                        lightboxImage.alt = image.alt || '';
-                        lightboxImage.style.display = 'block';
-                        lightboxVideo.style.display = 'none';
-                        lightboxModal.classList.add('active');
-                        
-                        // Prevent body scroll when lightbox is open
-                        document.body.style.overflow = 'hidden';
-                    }
-                });
-                
-                // Also allow clicking directly on images
-                const image = workImage.querySelector('img');
-                if (image) {
-                    image.style.cursor = 'pointer';
+        // Function to attach lightbox functionality to work items
+        function attachLightboxToWorkItems() {
+            // Get all work items (including dynamically added ones)
+            const workItems = document.querySelectorAll('.work-item');
+            
+            workItems.forEach(item => {
+                // Skip if already has lightbox attached
+                if (item.hasAttribute('data-lightbox-attached')) {
+                    return;
                 }
-            }
-        });
+                
+                const workImage = item.querySelector('.work-image');
+                if (workImage) {
+                    // Make sure it's clickable
+                    workImage.style.cursor = 'pointer';
+                    
+                    workImage.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Check if it's a video or image
+                        const video = workImage.querySelector('video');
+                        const image = workImage.querySelector('img');
+                        
+                        if (video) {
+                            openVideoInLightbox(video);
+                        } else if (image) {
+                            // It's an image
+                            lightboxImage.src = image.src;
+                            lightboxImage.alt = image.alt || '';
+                            lightboxImage.style.display = 'block';
+                            lightboxVideo.style.display = 'none';
+                            lightboxModal.classList.add('active');
+                            
+                            // Prevent body scroll when lightbox is open
+                            document.body.style.overflow = 'hidden';
+                        }
+                    });
+                    
+                    // Also allow clicking directly on images
+                    const image = workImage.querySelector('img');
+                    if (image) {
+                        image.style.cursor = 'pointer';
+                    }
+                    
+                    // Mark as having lightbox attached
+                    item.setAttribute('data-lightbox-attached', 'true');
+                }
+            });
+        }
+        
+        // Attach lightbox to existing work items
+        attachLightboxToWorkItems();
+        
+        // Also attach lightbox to dynamically added work items after a delay
+        // This will be called after works are loaded
+        setTimeout(attachLightboxToWorkItems, 1000);
         
         // Close lightbox function
         function closeLightbox() {
