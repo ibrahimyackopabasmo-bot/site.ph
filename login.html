@@ -176,6 +176,20 @@
         .register-link button:hover {
             color: var(--secondary-color);
         }
+        
+        .browse-guest-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .browse-guest-btn:hover {
+            background: #5a6268 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .browse-guest-btn:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -188,8 +202,8 @@
             </div>
             
             <div class="login-tabs">
-                <button class="login-tab active" data-tab="login">تسجيل الدخول (مسؤول/مستخدم)</button>
-                <button class="login-tab" data-tab="register">إنشاء حساب مستخدم</button>
+                <button class="login-tab active" data-tab="login">تسجيل الدخول</button>
+                <button class="login-tab" data-tab="register">إنشاء حساب</button>
             </div>
             
             <!-- Login Form -->
@@ -213,6 +227,15 @@
                 </div>
                 
                 <button type="submit" class="login-btn">تسجيل الدخول</button>
+                
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e0e0e0;">
+                    <button type="button" id="browseAsGuestBtn" class="browse-guest-btn" style="width: 100%; padding: 0.75rem; background: #6c757d; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">
+                        تصفح الموقع كزائر
+                    </button>
+                    <p style="text-align: center; margin-top: 0.75rem; color: #666; font-size: 0.85rem;">
+                        يمكنك تصفح الموقع واستخدام جميع الميزات بدون تسجيل الدخول
+                    </p>
+                </div>
             </form>
             
             <!-- Register Form -->
@@ -272,6 +295,20 @@
         // Switch to login from register
         document.getElementById('switchToLogin')?.addEventListener('click', function() {
             document.querySelector('[data-tab="login"]').click();
+        });
+        
+        // Browse as guest button
+        document.getElementById('browseAsGuestBtn')?.addEventListener('click', function() {
+            // Set guest mode in localStorage
+            localStorage.setItem('phonix_auth', JSON.stringify({
+                username: 'guest',
+                loggedIn: true,
+                isGuest: true,
+                isAdmin: false
+            }));
+            
+            // Redirect to homepage
+            window.location.href = 'index.html';
         });
     </script>
 </body>

@@ -9,17 +9,24 @@ const ADMIN_ACCOUNT = {
     password: '2002@2003@77'
 };
 
-// Check if user is authenticated
+// Check if user is authenticated (including guest mode)
 function isAuthenticated() {
     const auth = localStorage.getItem(AUTH_STORAGE_KEY);
     if (!auth) return false;
     
     try {
         const authData = JSON.parse(auth);
+        // Return true if user is logged in (regular user, admin, or guest)
         return authData && authData.username && authData.loggedIn === true;
     } catch (e) {
         return false;
     }
+}
+
+// Check if user is in guest mode
+function isGuest() {
+    const user = getCurrentUser();
+    return user && user.isGuest === true;
 }
 
 // Get current user info
@@ -38,6 +45,9 @@ function getCurrentUser() {
 function isAdmin() {
     const user = getCurrentUser();
     if (!user) return false;
+    
+    // Guests cannot be admins
+    if (user.isGuest === true) return false;
     
     // Check if user is in admins list
     const admins = getAdmins();
@@ -152,10 +162,20 @@ function loginUser(username, password) {
     return { success: true, message: 'تم تسجيل الدخول بنجاح' };
 }
 
-// Logout user
+// Logout user (including guests)
 function logout() {
     localStorage.removeItem(AUTH_STORAGE_KEY);
     window.location.href = 'login.html';
+}
+
+// Set guest mode
+function setGuestMode() {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+        username: 'guest',
+        loggedIn: true,
+        isGuest: true,
+        isAdmin: false
+    }));
 }
 
 // Protect page - redirect to login if not authenticated
