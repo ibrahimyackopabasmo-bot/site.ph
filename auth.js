@@ -197,41 +197,75 @@ document.addEventListener('DOMContentLoaded', function() {
         registerForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const username = document.getElementById('registerUsername').value.trim();
-            const password = document.getElementById('registerPassword').value;
-            const confirmPassword = document.getElementById('registerConfirmPassword').value;
-            const userType = document.querySelector('input[name="userType"]:checked').value;
+            const username = document.getElementById('registerUsername');
+            const password = document.getElementById('registerPassword');
+            const confirmPassword = document.getElementById('registerConfirmPassword');
             const errorDiv = document.getElementById('registerError');
             const successDiv = document.getElementById('registerSuccess');
             
-            // Hide previous messages
-            errorDiv.style.display = 'none';
-            successDiv.style.display = 'none';
+            // Get values
+            const usernameValue = username ? username.value.trim() : '';
+            const passwordValue = password ? password.value : '';
+            const confirmPasswordValue = confirmPassword ? confirmPassword.value : '';
             
-            // Validate passwords match
-            if (password !== confirmPassword) {
-                errorDiv.textContent = 'كلمات المرور غير متطابقة';
-                errorDiv.style.display = 'block';
+            // Hide previous messages
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (successDiv) successDiv.style.display = 'none';
+            
+            // Validate inputs
+            if (!usernameValue) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'يرجى إدخال اسم المستخدم';
+                    errorDiv.style.display = 'block';
+                }
                 return;
             }
             
-            const result = registerUser(username, password, userType);
+            if (!passwordValue) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'يرجى إدخال كلمة المرور';
+                    errorDiv.style.display = 'block';
+                }
+                return;
+            }
+            
+            // Validate passwords match
+            if (passwordValue !== confirmPasswordValue) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'كلمات المرور غير متطابقة';
+                    errorDiv.style.display = 'block';
+                }
+                return;
+            }
+            
+            // Register user (regular user only - no admin registration)
+            const result = registerUser(usernameValue, passwordValue);
             
             if (result.success) {
-                successDiv.textContent = result.message + '. يمكنك الآن تسجيل الدخول.';
-                successDiv.style.display = 'block';
+                if (successDiv) {
+                    successDiv.textContent = result.message;
+                    successDiv.style.display = 'block';
+                }
                 
                 // Clear form
-                registerForm.reset();
+                if (registerForm) registerForm.reset();
                 
-                // Switch to login after 2 seconds
+                // Switch to login after 2 seconds and pre-fill username
                 setTimeout(() => {
-                    document.querySelector('[data-tab="login"]').click();
-                    document.getElementById('loginUsername').value = username;
+                    const loginTab = document.querySelector('[data-tab="login"]');
+                    if (loginTab) {
+                        loginTab.click();
+                        const loginUsernameInput = document.getElementById('loginUsername');
+                        if (loginUsernameInput) {
+                            loginUsernameInput.value = usernameValue;
+                        }
+                    }
                 }, 2000);
             } else {
-                errorDiv.textContent = result.message;
-                errorDiv.style.display = 'block';
+                if (errorDiv) {
+                    errorDiv.textContent = result.message;
+                    errorDiv.style.display = 'block';
+                }
             }
         });
     }
