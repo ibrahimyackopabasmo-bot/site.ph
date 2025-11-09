@@ -269,31 +269,40 @@
             
             if (works && works.length > 0 && workGrid) {
                 works.forEach(work => {
+                    if (!work || !work.image) {
+                        console.warn('Invalid work data:', work);
+                        return; // Skip invalid works
+                    }
+                    
                     const workItem = document.createElement('div');
                     workItem.className = 'work-item';
                     
                     // Determine media type and render accordingly
+                    // Handle backward compatibility: if no fileType, assume it's an image (old format)
                     const fileType = work.fileType || '';
+                    const isImage = !fileType || fileType.startsWith('image/') || work.image.startsWith('data:image/');
+                    const isVideo = fileType.startsWith('video/') || work.image.startsWith('data:video/');
+                    
                     let mediaHTML = '';
                     
-                    if (fileType.startsWith('video/')) {
+                    if (isVideo) {
                         // Video file
                         mediaHTML = `
                             <div class="work-image">
                                 <video class="work-video-live" autoplay loop muted playsinline preload="auto">
-                                    <source src="${work.image}" type="${fileType}">
+                                    <source src="${work.image}" type="${fileType || 'video/mp4'}">
                                     متصفحك لا يدعم تشغيل الفيديو.
                                 </video>
                             </div>
                         `;
-                    } else if (fileType.startsWith('image/')) {
-                        // Image file
+                    } else if (isImage) {
+                        // Image file (default for backward compatibility)
                         mediaHTML = `
                             <div class="work-image">
-                                <img src="${work.image}" alt="${work.title}" class="work-image-img">
+                                <img src="${work.image}" alt="${work.title || 'عمل'}" class="work-image-img">
                             </div>
                         `;
-                    } else {
+                    } else if (fileType) {
                         // Other file types - show file icon with download option
                         mediaHTML = `
                             <div class="work-image" style="background: var(--light-bg); display: flex; align-items: center; justify-content: center; min-height: 200px;">
@@ -305,11 +314,18 @@
                                 </div>
                             </div>
                         `;
+                    } else {
+                        // Fallback: treat as image if we can't determine type
+                        mediaHTML = `
+                            <div class="work-image">
+                                <img src="${work.image}" alt="${work.title || 'عمل'}" class="work-image-img">
+                            </div>
+                        `;
                     }
                     
                     workItem.innerHTML = `
                         ${mediaHTML}
-                        <h3>${work.title}</h3>
+                        <h3>${work.title || 'عمل بدون عنوان'}</h3>
                         <p>${work.description || 'طباعة عالية الجودة'}</p>
                     `;
                     workGrid.appendChild(workItem);

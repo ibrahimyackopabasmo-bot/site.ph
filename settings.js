@@ -366,6 +366,11 @@ function handleWorkUpload() {
         works.push(newWork);
         saveWorks(works);
         
+        // Log for debugging
+        console.log('Work saved:', newWork);
+        console.log('Total works:', works.length);
+        console.log('Works in storage:', getSavedWorks().length);
+        
         // Show success message with animation
         if (uploadSuccess) {
             uploadSuccess.textContent = '✅ تم رفع العمل بنجاح! سيظهر في معرض الأعمال الآن.';
@@ -441,8 +446,11 @@ function handleWorkUpload() {
 function getSavedWorks() {
     try {
         const stored = localStorage.getItem('phonix_works');
-        return stored ? JSON.parse(stored) : [];
+        const works = stored ? JSON.parse(stored) : [];
+        console.log('Loaded works from localStorage:', works.length);
+        return works;
     } catch (e) {
+        console.error('Error loading works:', e);
         return [];
     }
 }
@@ -451,8 +459,18 @@ function getSavedWorks() {
 function saveWorks(works) {
     try {
         localStorage.setItem('phonix_works', JSON.stringify(works));
+        console.log('Works saved to localStorage:', works.length);
+        // Verify it was saved
+        const verify = localStorage.getItem('phonix_works');
+        if (!verify) {
+            console.error('Failed to save works to localStorage');
+        }
     } catch (e) {
         console.error('Error saving works:', e);
+        // Check if it's a quota exceeded error
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+            alert('لا يمكن حفظ الملف. حجم البيانات كبير جداً. يرجى محاولة رفع ملف أصغر.');
+        }
     }
 }
 
