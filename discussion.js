@@ -4,7 +4,7 @@ const REFRESH_INTERVAL = 80000; // 80 seconds in milliseconds
 const GOOGLE_SHEETS_API_URL = '/api/google-sheets';
 
 // Password Configuration - Change this password as needed
-const TABLE_PASSWORD = 'admin123'; // Change this to your desired password
+const TABLE_PASSWORD = '2002'; // Change this to your desired password
 const PASSWORD_STORAGE_KEY = 'table_access_granted';
 
 // Global variables
