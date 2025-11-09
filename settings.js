@@ -236,19 +236,6 @@ function initializeUploadForms() {
     }
 }
 
-// Re-initialize upload form when modal opens
-document.addEventListener('DOMContentLoaded', function() {
-    // Re-initialize when upload button is clicked
-    const uploadWorkBtn = document.getElementById('uploadWorkBtn');
-    if (uploadWorkBtn) {
-        const originalClickHandler = uploadWorkBtn.onclick;
-        uploadWorkBtn.addEventListener('click', function() {
-            setTimeout(() => {
-                initializeUploadForms();
-            }, 100);
-        });
-    }
-});
 
 // Update user info in settings menu
 function updateSettingsUserInfo() {
@@ -270,29 +257,67 @@ function updateSettingsUserInfo() {
 
 // Handle work upload
 function handleWorkUpload() {
-    const workTitle = document.getElementById('workTitle').value.trim();
-    const workDescription = document.getElementById('workDescription').value.trim();
-    const workImage = document.getElementById('workImage').files[0];
+    const workTitle = document.getElementById('workTitle');
+    const workDescription = document.getElementById('workDescription');
+    const workImage = document.getElementById('workImage');
     const uploadError = document.getElementById('uploadError');
     const uploadSuccess = document.getElementById('uploadSuccess');
+    const uploadWorkForm = document.getElementById('uploadWorkForm');
+    const uploadSubmitBtn = uploadWorkForm ? uploadWorkForm.querySelector('button[type="submit"]') : null;
+    
+    // Get values
+    const workTitleValue = workTitle ? workTitle.value.trim() : '';
+    const workDescriptionValue = workDescription ? workDescription.value.trim() : '';
+    const workImageFile = workImage && workImage.files.length > 0 ? workImage.files[0] : null;
     
     // Hide previous messages
-    if (uploadError) uploadError.style.display = 'none';
-    if (uploadSuccess) uploadSuccess.style.display = 'none';
+    if (uploadError) {
+        uploadError.style.display = 'none';
+        uploadError.textContent = '';
+        uploadError.classList.remove('shake');
+    }
+    if (uploadSuccess) {
+        uploadSuccess.style.display = 'none';
+        uploadSuccess.textContent = '';
+    }
     
     // Validate
-    if (!workTitle) {
+    if (!workTitleValue) {
         if (uploadError) {
             uploadError.textContent = 'يرجى إدخال عنوان العمل';
             uploadError.style.display = 'block';
+            uploadError.classList.add('shake');
+        }
+        if (workTitle) workTitle.focus();
+        return;
+    }
+    
+    if (!workImageFile) {
+        if (uploadError) {
+            uploadError.textContent = 'يرجى اختيار صورة للعمل';
+            uploadError.style.display = 'block';
+            uploadError.classList.add('shake');
+        }
+        if (workImage) workImage.focus();
+        return;
+    }
+    
+    // Check file type
+    if (!workImageFile.type.startsWith('image/')) {
+        if (uploadError) {
+            uploadError.textContent = 'يرجى اختيار ملف صورة صالح (JPG, PNG, etc.)';
+            uploadError.style.display = 'block';
+            uploadError.classList.add('shake');
         }
         return;
     }
     
-    if (!workImage) {
+    // Check file size (max 5MB)
+    if (workImageFile.size > 5 * 1024 * 1024) {
         if (uploadError) {
-            uploadError.textContent = 'يرجى اختيار صورة للعمل';
+            uploadError.textContent = 'حجم الصورة كبير جداً. يرجى اختيار صورة أصغر من 5 ميجابايت';
             uploadError.style.display = 'block';
+            uploadError.classList.add('shake');
         }
         return;
     }
@@ -302,8 +327,18 @@ function handleWorkUpload() {
         if (uploadError) {
             uploadError.textContent = 'ليس لديك صلاحية لرفع الأعمال. يجب أن تكون مسؤولاً.';
             uploadError.style.display = 'block';
+            uploadError.classList.add('shake');
         }
         return;
+    }
+    
+    // Show loading state
+    if (uploadSubmitBtn) {
+        uploadSubmitBtn.disabled = true;
+        const originalText = uploadSubmitBtn.textContent;
+        uploadSubmitBtn.textContent = 'جاري الرفع...';
+        uploadSubmitBtn.style.opacity = '0.7';
+        uploadSubmitBtn.style.cursor = 'not-allowed';
     }
     
     // Read image as base64
@@ -315,38 +350,78 @@ function handleWorkUpload() {
         const works = getSavedWorks();
         const newWork = {
             id: Date.now(),
-            title: workTitle,
-            description: workDescription,
+            title: workTitleValue,
+            description: workDescriptionValue,
             image: imageData,
-            date: new Date().toLocaleDateString('ar-SA')
+            date: new Date().toLocaleDateString('ar-SA'),
+            timestamp: Date.now()
         };
         
         works.push(newWork);
         saveWorks(works);
         
-        // Show success message
+        // Show success message with animation
         if (uploadSuccess) {
-            uploadSuccess.textContent = 'تم رفع العمل بنجاح! سيظهر في معرض الأعمال.';
+            uploadSuccess.textContent = '✅ تم رفع العمل بنجاح! سيظهر في معرض الأعمال الآن.';
             uploadSuccess.style.display = 'block';
+            uploadSuccess.classList.add('show');
         }
         
-        // Reset form
-        document.getElementById('uploadWorkForm').reset();
+        // Reset form and clear preview
+        if (uploadWorkForm) uploadWorkForm.reset();
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        if (previewContainer) {
+            previewContainer.classList.remove('show');
+            setTimeout(() => {
+                const previewImg = document.getElementById('imagePreview');
+                if (previewImg) previewImg.src = '';
+                previewContainer.style.display = 'none';
+            }, 300);
+        }
         
-        // Close modal after 2 seconds
+        // Reset button
+        if (uploadSubmitBtn) {
+            uploadSubmitBtn.disabled = false;
+            uploadSubmitBtn.textContent = 'رفع العمل';
+            uploadSubmitBtn.style.opacity = '1';
+            uploadSubmitBtn.style.cursor = 'pointer';
+        }
+        
+        // Close modal after 2.5 seconds and refresh
         setTimeout(() => {
             const uploadWorkModal = document.getElementById('uploadWorkModal');
             if (uploadWorkModal) {
-                uploadWorkModal.style.display = 'none';
+                uploadWorkModal.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    uploadWorkModal.style.display = 'none';
+                    uploadWorkModal.style.animation = '';
+                }, 300);
             }
-            if (uploadSuccess) uploadSuccess.style.display = 'none';
+            if (uploadSuccess) {
+                uploadSuccess.style.display = 'none';
+                uploadSuccess.classList.remove('show');
+            }
             
-            // Refresh page to show new work
+            // Refresh page to show new work in portfolio
             window.location.reload();
-        }, 2000);
+        }, 2500);
     };
     
-    reader.readAsDataURL(workImage);
+    reader.onerror = function() {
+        if (uploadError) {
+            uploadError.textContent = 'حدث خطأ أثناء قراءة الصورة. يرجى المحاولة مرة أخرى.';
+            uploadError.style.display = 'block';
+            uploadError.classList.add('shake');
+        }
+        if (uploadSubmitBtn) {
+            uploadSubmitBtn.disabled = false;
+            uploadSubmitBtn.textContent = 'رفع العمل';
+            uploadSubmitBtn.style.opacity = '1';
+            uploadSubmitBtn.style.cursor = 'pointer';
+        }
+    };
+    
+    reader.readAsDataURL(workImageFile);
 }
 
 // Get saved works

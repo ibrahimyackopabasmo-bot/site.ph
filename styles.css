@@ -108,6 +108,26 @@ body {
     color: var(--text-color);
 }
 
+[data-theme="dark"] .upload-form input[type="file"] {
+    background-color: #34495e;
+    border-color: #455a64;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .upload-form input[type="file"]:hover {
+    background-color: #3d5468;
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .upload-form input[type="file"].drag-over {
+    background-color: #3d5468;
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .image-preview {
+    border: 2px solid #455a64;
+}
+
 [data-theme="dark"] .user-info {
     background-color: #34495e;
     border-right-color: var(--primary-color);
