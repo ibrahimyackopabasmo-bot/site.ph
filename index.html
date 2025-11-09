@@ -105,7 +105,7 @@
     <section class="work-showcase">
         <div class="container">
             <h2 class="section-title">أعمالنا</h2>
-            <div class="work-grid">
+            <div class="work-grid" id="homeWorkGrid">
                 <div class="work-item">
                     <div class="work-image">
                         <video class="work-video-live" autoplay loop muted playsinline preload="auto">
@@ -291,6 +291,31 @@
         </div>
     </div>
 
+    <script>
+        // Load and display uploaded works on homepage
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof getSavedWorks === 'function') {
+                const works = getSavedWorks();
+                const workGrid = document.getElementById('homeWorkGrid');
+                
+                if (works && works.length > 0 && workGrid) {
+                    // Add uploaded works after existing works
+                    works.forEach(work => {
+                        const workItem = document.createElement('div');
+                        workItem.className = 'work-item';
+                        workItem.innerHTML = `
+                            <div class="work-image">
+                                <img src="${work.image}" alt="${work.title}" class="work-image-img">
+                            </div>
+                            <h3>${work.title}</h3>
+                            <p>${work.description || 'طباعة عالية الجودة'}</p>
+                        `;
+                        workGrid.appendChild(workItem);
+                    });
+                }
+            }
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
