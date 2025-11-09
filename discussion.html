@@ -40,6 +40,7 @@
                 <li><a href="contact.html">اتصل بنا</a></li>
                 <li><a href="request.html">طلب طباعة</a></li>
                 <li><a href="discussion.html" class="active">استعلام الدين</a></li>
+                <li><a href="#" id="settingsBtn" style="color: var(--primary-color); font-weight: bold;">⚙️ الإعدادات</a></li>
             </ul>
             <div class="navbar-social">
                 <a href="https://www.instagram.com/ar.phonex.pr?igsh=MWZtNmN5cTh0bzk1cA==" target="_blank" class="nav-social-link" title="Instagram">
@@ -198,6 +199,74 @@
     </footer>
 
     <script src="script.js"></script>
+    <!-- Settings Menu Modal -->
+    <div id="settingsMenu" class="settings-modal" style="display: none;">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>الإعدادات</h2>
+                <span id="settingsClose" class="settings-close">&times;</span>
+            </div>
+            <div class="settings-body">
+                <div class="settings-section">
+                    <h3>حساب المستخدم</h3>
+                    <div class="user-info">
+                        <div class="user-info-item">
+                            <strong>اسم المستخدم:</strong>
+                            <span id="settingsUsername">-</span>
+                        </div>
+                        <div class="user-info-item">
+                            <strong>نوع الحساب:</strong>
+                            <span id="settingsUserRole">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>المظهر</h3>
+                    <button id="themeToggleBtn" class="settings-btn theme-toggle-btn">☀️ الوضع النهاري</button>
+                </div>
+                <div class="settings-section" id="uploadWorkSection" style="display: none;">
+                    <h3>رفع العمل</h3>
+                    <button id="uploadWorkBtn" class="settings-btn upload-btn">📤 رفع عمل جديد</button>
+                </div>
+                <div class="settings-section">
+                    <h3>الحساب</h3>
+                    <button id="settingsLogoutBtn" class="settings-btn logout-btn">🚪 تسجيل الخروج</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Work Modal -->
+    <div id="uploadWorkModal" class="upload-modal" style="display: none;">
+        <div class="upload-modal-content">
+            <div class="upload-modal-header">
+                <h2>رفع عمل جديد</h2>
+                <span id="uploadModalClose" class="upload-modal-close">&times;</span>
+            </div>
+            <form id="uploadWorkForm" class="upload-form">
+                <div id="uploadError" class="error-message" style="display: none;"></div>
+                <div id="uploadSuccess" class="success-message" style="display: none;"></div>
+                <div class="form-group">
+                    <label for="workTitle">عنوان العمل *</label>
+                    <input type="text" id="workTitle" name="workTitle" required placeholder="أدخل عنوان العمل">
+                </div>
+                <div class="form-group">
+                    <label for="workDescription">وصف العمل</label>
+                    <textarea id="workDescription" name="workDescription" rows="4" placeholder="أدخل وصف العمل (اختياري)"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="workImage">صورة العمل *</label>
+                    <input type="file" id="workImage" name="workImage" accept="image/*" required>
+                    <small>يرجى اختيار صورة (JPG, PNG, etc.)</small>
+                </div>
+                <div class="upload-form-actions">
+                    <button type="submit" class="btn-primary">رفع العمل</button>
+                    <button type="button" id="uploadModalCancel" class="btn-secondary">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script src="discussion.js"></script>
 </body>
 </html>
