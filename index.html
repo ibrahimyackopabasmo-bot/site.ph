@@ -392,7 +392,15 @@
         }
         
         // Also expose function globally for manual refresh if needed
-        window.loadUploadedWorks = loadUploadedWorks;
+        window.loadUploadedWorks = function() {
+            loadUploadedWorks();
+            // Re-attach lightbox functionality to new items after a delay
+            setTimeout(function() {
+                if (typeof window.attachLightboxToWorkItems === 'function') {
+                    window.attachLightboxToWorkItems();
+                }
+            }, 200);
+        };
     </script>
     <script src="script.js"></script>
 </body>
