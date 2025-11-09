@@ -92,16 +92,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (uploadWorkSection) {
         if (typeof isAdmin === 'function' && isAdmin()) {
             uploadWorkSection.style.display = 'block';
+            // Add pulse animation effect
+            if (uploadWorkBtn) {
+                uploadWorkBtn.classList.add('pulse');
+            }
         } else {
             uploadWorkSection.style.display = 'none';
         }
     }
     
     if (uploadWorkBtn) {
-        uploadWorkBtn.addEventListener('click', function() {
+        uploadWorkBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Add click animation
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+            
             const uploadModal = document.getElementById('uploadWorkModal');
             if (uploadModal) {
                 uploadModal.style.display = 'flex';
+                // Add entrance animation
+                uploadModal.style.animation = 'fadeIn 0.3s ease';
             }
         });
     }
@@ -132,12 +145,107 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Upload work form submission
+    // Upload work form submission - initialize for all forms on page
+    initializeUploadForms();
+});
+
+// Initialize upload forms (called on page load and when modal opens)
+function initializeUploadForms() {
     const uploadWorkForm = document.getElementById('uploadWorkForm');
     if (uploadWorkForm) {
-        uploadWorkForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleWorkUpload();
+        // Remove existing listeners to prevent duplicates
+        const newForm = uploadWorkForm.cloneNode(true);
+        uploadWorkForm.parentNode.replaceChild(newForm, uploadWorkForm);
+        
+        const form = document.getElementById('uploadWorkForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleWorkUpload();
+            });
+            
+            // Add image preview functionality
+            const workImageInput = document.getElementById('workImage');
+            if (workImageInput) {
+                workImageInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        // Check file size
+                        if (file.size > 5 * 1024 * 1024) {
+                            alert('حجم الصورة كبير جداً. يرجى اختيار صورة أصغر من 5 ميجابايت');
+                            this.value = '';
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            showImagePreview(e.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        alert('يرجى اختيار ملف صورة صالح');
+                        this.value = '';
+                    }
+                });
+                
+                // Drag and drop functionality
+                form.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (workImageInput) {
+                        workImageInput.classList.add('drag-over');
+                    }
+                });
+                
+                form.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (workImageInput && !form.contains(e.relatedTarget)) {
+                        workImageInput.classList.remove('drag-over');
+                    }
+                });
+                
+                form.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (workImageInput) {
+                        workImageInput.classList.remove('drag-over');
+                    }
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0 && files[0].type.startsWith('image/')) {
+                        if (files[0].size > 5 * 1024 * 1024) {
+                            alert('حجم الصورة كبير جداً. يرجى اختيار صورة أصغر من 5 ميجابايت');
+                            return;
+                        }
+                        
+                        // Create a new FileList-like object
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(files[0]);
+                        workImageInput.files = dataTransfer.files;
+                        
+                        // Trigger change event
+                        const event = new Event('change', { bubbles: true });
+                        workImageInput.dispatchEvent(event);
+                    } else {
+                        alert('يرجى سحب ملف صورة صالح');
+                    }
+                });
+            }
+        }
+    }
+}
+
+// Re-initialize upload form when modal opens
+document.addEventListener('DOMContentLoaded', function() {
+    // Re-initialize when upload button is clicked
+    const uploadWorkBtn = document.getElementById('uploadWorkBtn');
+    if (uploadWorkBtn) {
+        const originalClickHandler = uploadWorkBtn.onclick;
+        uploadWorkBtn.addEventListener('click', function() {
+            setTimeout(() => {
+                initializeUploadForms();
+            }, 100);
         });
     }
 });
@@ -260,7 +368,44 @@ function saveWorks(works) {
     }
 }
 
+// Show image preview
+function showImagePreview(imageSrc) {
+    // Remove existing preview if any
+    let previewContainer = document.getElementById('imagePreviewContainer');
+    if (!previewContainer) {
+        previewContainer = document.createElement('div');
+        previewContainer.id = 'imagePreviewContainer';
+        previewContainer.className = 'image-preview-container';
+        
+        const previewLabel = document.createElement('p');
+        previewLabel.style.marginBottom = '0.5rem';
+        previewLabel.style.fontWeight = 'bold';
+        previewLabel.style.color = 'var(--text-color)';
+        previewLabel.textContent = 'معاينة الصورة:';
+        
+        const previewImg = document.createElement('img');
+        previewImg.id = 'imagePreview';
+        previewImg.className = 'image-preview';
+        previewImg.alt = 'معاينة الصورة';
+        
+        previewContainer.appendChild(previewLabel);
+        previewContainer.appendChild(previewImg);
+        
+        const workImageInput = document.getElementById('workImage');
+        if (workImageInput && workImageInput.parentNode) {
+            workImageInput.parentNode.appendChild(previewContainer);
+        }
+    }
+    
+    const previewImg = document.getElementById('imagePreview');
+    if (previewImg) {
+        previewImg.src = imageSrc;
+        previewContainer.classList.add('show');
+    }
+}
+
 // Make functions available globally
 window.getSavedWorks = getSavedWorks;
 window.saveWorks = saveWorks;
+window.showImagePreview = showImagePreview;
 

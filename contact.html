@@ -224,8 +224,10 @@
                 <div class="form-group">
                     <label for="workImage">صورة العمل *</label>
                     <input type="file" id="workImage" name="workImage" accept="image/*" required>
-                    <small>يرجى اختيار صورة (JPG, PNG, etc.)</small>
+                    <small>يرجى اختيار صورة (JPG, PNG, etc.) - الحد الأقصى 5 ميجابايت</small>
+                    <small style="display: block; margin-top: 0.5rem; color: #3498db;">💡 يمكنك أيضاً سحب وإفلات الصورة هنا</small>
                 </div>
+                <div id="imagePreviewContainer" class="image-preview-container"></div>
                 <div class="upload-form-actions">
                     <button type="submit" class="btn-primary">رفع العمل</button>
                     <button type="button" id="uploadModalCancel" class="btn-secondary">إلغاء</button>
