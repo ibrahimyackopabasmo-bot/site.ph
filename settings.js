@@ -35,29 +35,102 @@ function getCurrentTheme() {
     return document.documentElement.getAttribute('data-theme') || THEMES.light;
 }
 
+// Check if user is guest (from auth.js)
+function isGuest() {
+    if (typeof window.isGuest === 'function') {
+        return window.isGuest();
+    }
+    if (typeof getCurrentUser === 'function') {
+        const user = getCurrentUser();
+        return user && user.isGuest === true;
+    }
+    return false;
+}
+
+// Update user info in settings menu
+function updateSettingsUserInfo() {
+    try {
+        if (typeof getCurrentUser !== 'function') {
+            console.warn('getCurrentUser function not available yet');
+            return;
+        }
+        
+        const user = getCurrentUser();
+        const usernameDisplay = document.getElementById('settingsUsername');
+        const userRoleDisplay = document.getElementById('settingsUserRole');
+        
+        if (usernameDisplay) {
+            if (user) {
+                if (isGuest()) {
+                    usernameDisplay.textContent = 'زائر';
+                } else {
+                    usernameDisplay.textContent = user.username || 'غير محدد';
+                }
+            } else {
+                usernameDisplay.textContent = '-';
+            }
+        }
+        
+        if (userRoleDisplay) {
+            if (user) {
+                if (isGuest()) {
+                    userRoleDisplay.textContent = 'زائر';
+                    userRoleDisplay.style.color = '#95a5a6';
+                } else if (user.isAdmin) {
+                    userRoleDisplay.textContent = 'مسؤول';
+                    userRoleDisplay.style.color = '#e74c3c';
+                } else {
+                    userRoleDisplay.textContent = 'مستخدم';
+                    userRoleDisplay.style.color = '#3498db';
+                }
+            } else {
+                userRoleDisplay.textContent = '-';
+            }
+        }
+    } catch (error) {
+        console.error('Error updating settings user info:', error);
+    }
+}
+
 // Initialize theme on page load
 document.addEventListener('DOMContentLoaded', function() {
-    initTheme();
-    
-    // Initialize user info in settings menu (if menu is visible)
-    updateSettingsUserInfo();
+    try {
+        initTheme();
+    } catch (error) {
+        console.error('Error initializing theme:', error);
+    }
     
     // Settings menu toggle
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsMenu = document.getElementById('settingsMenu');
     const settingsClose = document.getElementById('settingsClose');
     
-    if (settingsBtn && settingsMenu) {
+    console.log('Settings elements:', { settingsBtn, settingsMenu, settingsClose });
+    
+    if (settingsBtn) {
         settingsBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            settingsMenu.style.display = 'flex';
-            // Update user info in settings when menu opens
-            updateSettingsUserInfo();
+            e.stopPropagation();
+            console.log('Settings button clicked');
+            
+            if (settingsMenu) {
+                console.log('Opening settings menu');
+                settingsMenu.style.display = 'flex';
+                // Update user info in settings when menu opens
+                updateSettingsUserInfo();
+            } else {
+                console.error('Settings menu element not found');
+            }
         });
+    } else {
+        console.error('Settings button not found');
     }
     
     if (settingsClose && settingsMenu) {
-        settingsClose.addEventListener('click', function() {
+        settingsClose.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Closing settings menu');
             settingsMenu.style.display = 'none';
         });
     }
@@ -66,6 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (settingsMenu) {
         settingsMenu.addEventListener('click', function(e) {
             if (e.target === settingsMenu) {
+                console.log('Closing settings menu (clicked outside)');
                 settingsMenu.style.display = 'none';
             }
         });
@@ -253,46 +327,6 @@ function initializeUploadForms() {
                         workImageInput.dispatchEvent(event);
                     }
                 });
-            }
-        }
-    }
-}
-
-
-// Check if user is guest (from auth.js)
-function isGuest() {
-    if (typeof window.isGuest === 'function') {
-        return window.isGuest();
-    }
-    const user = getCurrentUser();
-    return user && user.isGuest === true;
-}
-
-// Update user info in settings menu
-function updateSettingsUserInfo() {
-    if (typeof getCurrentUser === 'function') {
-        const user = getCurrentUser();
-        const usernameDisplay = document.getElementById('settingsUsername');
-        const userRoleDisplay = document.getElementById('settingsUserRole');
-        
-        if (usernameDisplay && user) {
-            if (isGuest()) {
-                usernameDisplay.textContent = 'زائر';
-            } else {
-                usernameDisplay.textContent = user.username || 'غير محدد';
-            }
-        }
-        
-        if (userRoleDisplay && user) {
-            if (isGuest()) {
-                userRoleDisplay.textContent = 'زائر';
-                userRoleDisplay.style.color = '#95a5a6';
-            } else if (user.isAdmin) {
-                userRoleDisplay.textContent = 'مسؤول';
-                userRoleDisplay.style.color = '#e74c3c';
-            } else {
-                userRoleDisplay.textContent = 'مستخدم';
-                userRoleDisplay.style.color = '#3498db';
             }
         }
     }
