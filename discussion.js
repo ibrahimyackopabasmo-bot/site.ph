@@ -3,9 +3,7 @@ const REFRESH_INTERVAL = 80000; // 80 seconds in milliseconds
 // Use server-side proxy to avoid CORS issues
 const GOOGLE_SHEETS_API_URL = '/api/google-sheets';
 
-// Password Configuration - Change this password as needed
-const TABLE_PASSWORD = '2002'; // Change this to your desired password
-const PASSWORD_STORAGE_KEY = 'table_access_granted';
+// Table access is now controlled by admin status (no password needed for admins)
 
 // Global variables
 let sheetData = null;
@@ -33,29 +31,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const tableHeader = document.getElementById('tableHeader');
     const tableBody = document.getElementById('tableBody');
     const toggleTableBtn = document.getElementById('toggleTableBtn');
-    const passwordModal = document.getElementById('passwordModal');
-    const passwordForm = document.getElementById('passwordForm');
-    const tablePasswordInput = document.getElementById('tablePassword');
-    const passwordError = document.getElementById('passwordError');
-    const passwordModalClose = document.querySelector('.password-modal-close');
-    const passwordCancelBtn = document.querySelector('.password-cancel-btn');
+    // Password modal removed - using admin authentication instead
     
     let tableVisible = false;
-    let isPasswordVerified = false;
     
-    // Check if password was already verified in this session
-    function checkPasswordStatus() {
-        const stored = sessionStorage.getItem(PASSWORD_STORAGE_KEY);
-        if (stored === 'true') {
-            isPasswordVerified = true;
-            if (toggleTableBtn) {
-                toggleTableBtn.textContent = 'عرض/إخفاء الجدول';
-            }
+    // Check if user is admin (from auth.js)
+    function isUserAdmin() {
+        if (typeof isAdmin === 'function') {
+            return isAdmin();
         }
+        return false;
     }
     
-    // Initialize password status check
-    checkPasswordStatus();
+    // Check admin status on load
+    function checkAdminStatus() {
+        const isAdminUser = isUserAdmin();
+        if (!isAdminUser && toggleTableBtn) {
+            // Hide table button for non-admin users
+            toggleTableBtn.style.display = 'none';
+        } else if (isAdminUser && toggleTableBtn) {
+            toggleTableBtn.style.display = 'inline-block';
+            toggleTableBtn.textContent = 'عرض/إخفاء الجدول';
+        }
+    }
+    checkAdminStatus();
 
     // Load sheet data on page load
     // Show loading indicator initially
@@ -212,22 +211,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Toggle sheet data table visibility with password protection
+    // Toggle sheet data table visibility (admin only)
     if (toggleTableBtn) {
         toggleTableBtn.addEventListener('click', function() {
-            // Check if password is verified
-            if (!isPasswordVerified) {
-                // Show password modal
-                if (passwordModal) {
-                    passwordModal.style.display = 'flex';
-                    if (tablePasswordInput) {
-                        tablePasswordInput.focus();
-                    }
-                }
+            // Check admin status
+            if (!isUserAdmin()) {
+                alert('ليس لديك صلاحية لعرض الجدول. يجب أن تكون مسؤولاً.');
                 return;
             }
             
-            // Password verified - toggle table
+            // Admin verified - toggle table
             if (sheetDataTable) {
                 tableVisible = !tableVisible;
                 if (tableVisible) {
@@ -1032,26 +1025,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 100);
         }
         
-        // Show table if we have data (but respect password and toggle state)
+        // Show table if we have data (admin only)
         if (sheetDataTable && rowCount > 0) {
-            // Only show if password is verified AND table was previously visible
-            if (isPasswordVerified && tableVisible) {
+            // Only show if user is admin AND table was previously visible
+            if (isUserAdmin() && tableVisible) {
                 sheetDataTable.style.display = 'block';
             } else {
                 sheetDataTable.style.display = 'none';
             }
-            // Enable toggle button
+            // Enable toggle button (only for admins)
             if (toggleTableBtn) {
-                toggleTableBtn.disabled = false;
-                if (isPasswordVerified) {
+                if (isUserAdmin()) {
+                    toggleTableBtn.disabled = false;
                     toggleTableBtn.textContent = tableVisible ? 'إخفاء الجدول' : 'عرض الجدول';
+                    toggleTableBtn.style.display = 'inline-block';
                 } else {
-                    toggleTableBtn.textContent = 'عرض الجدول (يتطلب كلمة مرور)';
+                    toggleTableBtn.style.display = 'none';
                 }
             }
         } else {
             sheetDataTable.style.display = 'none';
-            if (toggleTableBtn) {
+            if (toggleTableBtn && isUserAdmin()) {
                 toggleTableBtn.disabled = true;
                 toggleTableBtn.textContent = 'لا توجد بيانات';
             }

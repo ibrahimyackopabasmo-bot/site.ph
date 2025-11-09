@@ -8,8 +8,15 @@
     <link rel="shortcut icon" type="image/png" href="logo2.png">
     <link rel="apple-touch-icon" href="logo2.png">
     <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
 </head>
 <body>
+    <script>
+        // Protect page - redirect to login if not authenticated
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+    </script>
     <header class="site-header">
         <div class="container">
             <div class="header-content">
@@ -134,30 +141,6 @@
                 </div>
             </div>
             
-            <!-- Password Modal for Table Access -->
-            <div id="passwordModal" class="password-modal" style="display: none;">
-                <div class="password-modal-content">
-                    <span class="password-modal-close">&times;</span>
-                    <h2>إدخال كلمة المرور</h2>
-                    <p>يرجى إدخال كلمة المرور لعرض الجدول</p>
-                    <form id="passwordForm">
-                        <div class="form-group">
-                            <label for="tablePassword">كلمة المرور</label>
-                            <input 
-                                type="password" 
-                                id="tablePassword" 
-                                name="tablePassword" 
-                                placeholder="أدخل كلمة المرور" 
-                                required
-                                autocomplete="off"
-                            >
-                        </div>
-                        <div id="passwordError" class="password-error" style="display: none;"></div>
-                        <button type="submit" class="btn-primary">دخول</button>
-                        <button type="button" class="btn-secondary password-cancel-btn">إلغاء</button>
-                    </form>
-                </div>
-            </div>
             
             <div id="loadingIndicator" class="loading-indicator" style="display: block;">
                 <div class="spinner"></div>

@@ -8,8 +8,26 @@
     <link rel="shortcut icon" type="image/png" href="logo2.png">
     <link rel="apple-touch-icon" href="logo2.png">
     <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
 </head>
 <body>
+    <script>
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+                        logout();
+                    }
+                });
+            }
+        });
+    </script>
     <header class="site-header">
         <div class="container">
             <div class="header-content">

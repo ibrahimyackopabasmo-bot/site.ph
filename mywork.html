@@ -8,8 +8,26 @@
     <link rel="shortcut icon" type="image/png" href="logo2.png">
     <link rel="apple-touch-icon" href="logo2.png">
     <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
 </head>
 <body>
+    <script>
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
+                        logout();
+                    }
+                });
+            }
+        });
+    </script>
     <header class="site-header">
         <div class="container">
             <div class="header-content">
@@ -33,6 +51,7 @@
                 <li><a href="contact.html">اتصل بنا</a></li>
                 <li><a href="request.html">طلب طباعة</a></li>
                 <li><a href="discussion.html">استعلام الدين</a></li>
+                <li><a href="#" id="logoutBtn" style="color: var(--secondary-color);">تسجيل الخروج</a></li>
             </ul>
             <div class="navbar-social">
                 <a href="https://www.instagram.com/ar.phonex.pr?igsh=MWZtNmN5cTh0bzk1cA==" target="_blank" class="nav-social-link" title="Instagram">
