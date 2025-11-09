@@ -2460,6 +2460,19 @@ footer {
     animation: scaleIn 0.3s ease;
 }
 
+.image-preview video {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+}
+
+.file-preview {
+    margin-top: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: scaleIn 0.3s ease;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

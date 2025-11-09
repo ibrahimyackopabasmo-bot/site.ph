@@ -199,7 +199,7 @@
             <img id="lightboxImage" class="lightbox-media" src="" alt="" style="display: none;">
         </div>
     </div>
-    
+
     <!-- Settings Menu Modal -->
     <div id="settingsMenu" class="settings-modal" style="display: none;">
         <div class="settings-content">
@@ -275,10 +275,10 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="workImage">صورة العمل *</label>
-                    <input type="file" id="workImage" name="workImage" accept="image/*" required>
-                    <small>يرجى اختيار صورة (JPG, PNG, etc.) - الحد الأقصى 5 ميجابايت</small>
-                    <small style="display: block; margin-top: 0.5rem; color: #3498db;">💡 يمكنك أيضاً سحب وإفلات الصورة هنا</small>
+                    <label for="workImage">ملف العمل *</label>
+                    <input type="file" id="workImage" name="workImage" required>
+                    <small>يمكنك رفع أي نوع من الملفات (صور، فيديو MP4، مستندات، etc.) - الحد الأقصى 1000 ميجابايت (1 جيجابايت)</small>
+                    <small style="display: block; margin-top: 0.5rem; color: #3498db;">💡 يمكنك أيضاً سحب وإفلات الملف هنا</small>
                 </div>
                 <div id="imagePreviewContainer" class="image-preview-container"></div>
                 
@@ -302,10 +302,44 @@
                     works.forEach(work => {
                         const workItem = document.createElement('div');
                         workItem.className = 'work-item';
+                        
+                        // Determine media type and render accordingly
+                        const fileType = work.fileType || '';
+                        let mediaHTML = '';
+                        
+                        if (fileType.startsWith('video/')) {
+                            // Video file
+                            mediaHTML = `
+                                <div class="work-image">
+                                    <video class="work-video-live" autoplay loop muted playsinline preload="auto">
+                                        <source src="${work.image}" type="${fileType}">
+                                        متصفحك لا يدعم تشغيل الفيديو.
+                                    </video>
+                                </div>
+                            `;
+                        } else if (fileType.startsWith('image/')) {
+                            // Image file
+                            mediaHTML = `
+                                <div class="work-image">
+                                    <img src="${work.image}" alt="${work.title}" class="work-image-img">
+                                </div>
+                            `;
+                        } else {
+                            // Other file types - show file icon with download option
+                            mediaHTML = `
+                                <div class="work-image" style="background: var(--light-bg); display: flex; align-items: center; justify-content: center; min-height: 200px;">
+                                    <div style="text-align: center; padding: 2rem;">
+                                        <p style="font-size: 4rem; margin: 0.5rem 0;">📄</p>
+                                        <p style="margin: 0.5rem 0; font-weight: bold;">${work.fileName || 'ملف'}</p>
+                                        <p style="margin: 0.5rem 0; color: #666; font-size: 0.9rem;">${fileType || 'نوع الملف غير محدد'}</p>
+                                        <a href="${work.image}" download="${work.fileName || 'file'}" style="display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; background: var(--primary-color); color: white; text-decoration: none; border-radius: 5px;">تحميل الملف</a>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
                         workItem.innerHTML = `
-                            <div class="work-image">
-                                <img src="${work.image}" alt="${work.title}" class="work-image-img">
-                            </div>
+                            ${mediaHTML}
                             <h3>${work.title}</h3>
                             <p>${work.description || 'طباعة عالية الجودة'}</p>
                         `;

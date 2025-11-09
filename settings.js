@@ -187,27 +187,25 @@ function initializeUploadForms() {
                 handleWorkUpload();
             });
             
-            // Add image preview functionality
+            // Add file preview functionality (images and videos)
             const workImageInput = document.getElementById('workImage');
             if (workImageInput) {
                 workImageInput.addEventListener('change', function(e) {
                     const file = e.target.files[0];
-                    if (file && file.type.startsWith('image/')) {
-                        // Check file size
-                        if (file.size > 5 * 1024 * 1024) {
-                            alert('حجم الصورة كبير جداً. يرجى اختيار صورة أصغر من 5 ميجابايت');
+                    if (file) {
+                        // Check file size (max 1000MB)
+                        if (file.size > 1000 * 1024 * 1024) {
+                            alert('حجم الملف كبير جداً. يرجى اختيار ملف أصغر من 1000 ميجابايت (1 جيجابايت)');
                             this.value = '';
                             return;
                         }
                         
+                        // Show preview for images and videos
                         const reader = new FileReader();
                         reader.onload = function(e) {
-                            showImagePreview(e.target.result);
+                            showFilePreview(e.target.result, file.type);
                         };
                         reader.readAsDataURL(file);
-                    } else {
-                        alert('يرجى اختيار ملف صورة صالح');
-                        this.value = '';
                     }
                 });
                 
@@ -236,9 +234,9 @@ function initializeUploadForms() {
                     }
                     
                     const files = e.dataTransfer.files;
-                    if (files.length > 0 && files[0].type.startsWith('image/')) {
-                        if (files[0].size > 5 * 1024 * 1024) {
-                            alert('حجم الصورة كبير جداً. يرجى اختيار صورة أصغر من 5 ميجابايت');
+                    if (files.length > 0) {
+                        if (files[0].size > 1000 * 1024 * 1024) {
+                            alert('حجم الملف كبير جداً. يرجى اختيار ملف أصغر من 1000 ميجابايت (1 جيجابايت)');
                             return;
                         }
                         
@@ -250,8 +248,6 @@ function initializeUploadForms() {
                         // Trigger change event
                         const event = new Event('change', { bubbles: true });
                         workImageInput.dispatchEvent(event);
-                    } else {
-                        alert('يرجى سحب ملف صورة صالح');
                     }
                 });
             }
@@ -317,7 +313,7 @@ function handleWorkUpload() {
     
     if (!workImageFile) {
         if (uploadError) {
-            uploadError.textContent = 'يرجى اختيار صورة للعمل';
+            uploadError.textContent = 'يرجى اختيار ملف للعمل';
             uploadError.style.display = 'block';
             uploadError.classList.add('shake');
         }
@@ -325,20 +321,10 @@ function handleWorkUpload() {
         return;
     }
     
-    // Check file type
-    if (!workImageFile.type.startsWith('image/')) {
+    // Check file size (max 1000MB = 1GB)
+    if (workImageFile.size > 1000 * 1024 * 1024) {
         if (uploadError) {
-            uploadError.textContent = 'يرجى اختيار ملف صورة صالح (JPG, PNG, etc.)';
-            uploadError.style.display = 'block';
-            uploadError.classList.add('shake');
-        }
-        return;
-    }
-    
-    // Check file size (max 5MB)
-    if (workImageFile.size > 5 * 1024 * 1024) {
-        if (uploadError) {
-            uploadError.textContent = 'حجم الصورة كبير جداً. يرجى اختيار صورة أصغر من 5 ميجابايت';
+            uploadError.textContent = 'حجم الملف كبير جداً. يرجى اختيار ملف أصغر من 1000 ميجابايت (1 جيجابايت)';
             uploadError.style.display = 'block';
             uploadError.classList.add('shake');
         }
@@ -357,10 +343,12 @@ function handleWorkUpload() {
         uploadSubmitBtn.style.cursor = 'not-allowed';
     }
     
-    // Read image as base64
+    // Read file as base64 (supports images, videos, and all file types)
     const reader = new FileReader();
     reader.onload = function(e) {
-        const imageData = e.target.result;
+        const fileData = e.target.result;
+        const fileType = workImageFile.type;
+        const fileName = workImageFile.name;
         
         // Save work to localStorage (in production, this would be sent to a server)
         const works = getSavedWorks();
@@ -368,7 +356,9 @@ function handleWorkUpload() {
             id: Date.now(),
             title: workTitleValue,
             description: workDescriptionValue,
-            image: imageData,
+            image: fileData, // Store file data (can be image, video, or any file)
+            fileType: fileType, // Store file type for proper rendering
+            fileName: fileName, // Store file name
             date: new Date().toLocaleDateString('ar-SA'),
             timestamp: Date.now()
         };
@@ -459,8 +449,8 @@ function saveWorks(works) {
     }
 }
 
-// Show image preview
-function showImagePreview(imageSrc) {
+// Show file preview (supports images, videos, and other files)
+function showFilePreview(fileSrc, fileType) {
     // Remove existing preview if any
     let previewContainer = document.getElementById('imagePreviewContainer');
     if (!previewContainer) {
@@ -472,15 +462,7 @@ function showImagePreview(imageSrc) {
         previewLabel.style.marginBottom = '0.5rem';
         previewLabel.style.fontWeight = 'bold';
         previewLabel.style.color = 'var(--text-color)';
-        previewLabel.textContent = 'معاينة الصورة:';
-        
-        const previewImg = document.createElement('img');
-        previewImg.id = 'imagePreview';
-        previewImg.className = 'image-preview';
-        previewImg.alt = 'معاينة الصورة';
-        
-        previewContainer.appendChild(previewLabel);
-        previewContainer.appendChild(previewImg);
+        previewLabel.id = 'previewLabel';
         
         const workImageInput = document.getElementById('workImage');
         if (workImageInput && workImageInput.parentNode) {
@@ -488,15 +470,64 @@ function showImagePreview(imageSrc) {
         }
     }
     
-    const previewImg = document.getElementById('imagePreview');
-    if (previewImg) {
-        previewImg.src = imageSrc;
-        previewContainer.classList.add('show');
+    // Clear previous preview content
+    const existingPreview = previewContainer.querySelector('#previewMedia');
+    if (existingPreview) {
+        existingPreview.remove();
     }
+    
+    const previewLabel = document.getElementById('previewLabel');
+    let previewMedia;
+    
+    if (fileType.startsWith('image/')) {
+        // Image preview
+        if (previewLabel) previewLabel.textContent = 'معاينة الصورة:';
+        previewMedia = document.createElement('img');
+        previewMedia.id = 'previewMedia';
+        previewMedia.className = 'image-preview';
+        previewMedia.alt = 'معاينة الصورة';
+        previewMedia.src = fileSrc;
+    } else if (fileType.startsWith('video/')) {
+        // Video preview
+        if (previewLabel) previewLabel.textContent = 'معاينة الفيديو:';
+        previewMedia = document.createElement('video');
+        previewMedia.id = 'previewMedia';
+        previewMedia.className = 'image-preview';
+        previewMedia.controls = true;
+        previewMedia.src = fileSrc;
+        previewMedia.style.maxHeight = '300px';
+    } else {
+        // Other file types - show file info
+        if (previewLabel) previewLabel.textContent = 'معاينة الملف:';
+        previewMedia = document.createElement('div');
+        previewMedia.id = 'previewMedia';
+        previewMedia.className = 'file-preview';
+        previewMedia.style.padding = '1rem';
+        previewMedia.style.background = 'var(--light-bg)';
+        previewMedia.style.borderRadius = '8px';
+        previewMedia.style.textAlign = 'center';
+        previewMedia.innerHTML = `
+            <p style="font-size: 3rem; margin: 0.5rem 0;">📄</p>
+            <p style="margin: 0.5rem 0; font-weight: bold;">نوع الملف: ${fileType || 'غير محدد'}</p>
+            <p style="margin: 0.5rem 0; color: #666;">سيتم رفع الملف بنجاح</p>
+        `;
+    }
+    
+    if (previewLabel && !previewContainer.contains(previewLabel)) {
+        previewContainer.appendChild(previewLabel);
+    }
+    previewContainer.appendChild(previewMedia);
+    previewContainer.classList.add('show');
+}
+
+// Keep backward compatibility
+function showImagePreview(imageSrc) {
+    showFilePreview(imageSrc, 'image/*');
 }
 
 // Make functions available globally
 window.getSavedWorks = getSavedWorks;
 window.saveWorks = saveWorks;
 window.showImagePreview = showImagePreview;
+window.showFilePreview = showFilePreview;
 
