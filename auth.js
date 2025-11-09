@@ -3,10 +3,10 @@ const AUTH_STORAGE_KEY = 'phonix_auth';
 const USERS_STORAGE_KEY = 'phonix_users';
 const ADMINS_STORAGE_KEY = 'phonix_admins';
 
-// Initialize default admin account (can be changed later)
-const DEFAULT_ADMIN = {
-    username: 'admin',
-    password: 'admin123'
+// Hardcoded admin account - cannot be changed or created
+const ADMIN_ACCOUNT = {
+    username: 'ibrahim',
+    password: '2002@2003@77'
 };
 
 // Check if user is authenticated
@@ -54,17 +54,10 @@ function getUsers() {
     }
 }
 
-// Get all admins
+// Get all admins (only the hardcoded admin)
 function getAdmins() {
-    try {
-        const stored = localStorage.getItem(ADMINS_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-        // Initialize with default admin
-        const defaultAdmins = [DEFAULT_ADMIN.username];
-        localStorage.setItem(ADMINS_STORAGE_KEY, JSON.stringify(defaultAdmins));
-        return defaultAdmins;
-    }
+    // Only return the hardcoded admin - no one can create admin accounts
+    return [ADMIN_ACCOUNT.username];
 }
 
 // Save users
@@ -85,8 +78,8 @@ function saveAdmins(admins) {
     }
 }
 
-// Register a new user
-function registerUser(username, password, userType) {
+// Register a new user (regular users only - no admin registration allowed)
+function registerUser(username, password) {
     // Validate input
     if (!username || !password) {
         return { success: false, message: 'يرجى إدخال اسم المستخدم وكلمة المرور' };
@@ -100,29 +93,28 @@ function registerUser(username, password, userType) {
         return { success: false, message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' };
     }
     
+    // Prevent registering with admin username
+    if (username === ADMIN_ACCOUNT.username) {
+        return { success: false, message: 'لا يمكن استخدام هذا الاسم. يرجى اختيار اسم آخر.' };
+    }
+    
     // Get existing users
     const users = getUsers();
     const admins = getAdmins();
     
-    // Check if username already exists
+    // Check if username already exists (in users or admin)
     if (users.some(u => u.username === username) || admins.includes(username)) {
         return { success: false, message: 'اسم المستخدم موجود بالفعل' };
     }
     
-    // Add user to storage
+    // Add user to storage (regular user only - no admin registration)
     users.push({
         username: username,
         password: password // In production, this should be hashed
     });
     saveUsers(users);
     
-    // If admin registration, add to admins list
-    if (userType === 'admin') {
-        admins.push(username);
-        saveAdmins(admins);
-    }
-    
-    return { success: true, message: 'تم إنشاء الحساب بنجاح' };
+    return { success: true, message: 'تم إنشاء الحساب بنجاح. يمكنك الآن تسجيل الدخول كمستخدم عادي.' };
 }
 
 // Login user
@@ -132,39 +124,29 @@ function loginUser(username, password) {
         return { success: false, message: 'يرجى إدخال اسم المستخدم وكلمة المرور' };
     }
     
-    // Check default admin
-    if (username === DEFAULT_ADMIN.username && password === DEFAULT_ADMIN.password) {
-        const admins = getAdmins();
-        if (!admins.includes(username)) {
-            admins.push(username);
-            saveAdmins(admins);
-        }
+    // Check hardcoded admin account first
+    if (username === ADMIN_ACCOUNT.username && password === ADMIN_ACCOUNT.password) {
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
             username: username,
             loggedIn: true,
             isAdmin: true
         }));
-        return { success: true, message: 'تم تسجيل الدخول بنجاح' };
+        return { success: true, message: 'تم تسجيل الدخول كمسؤول بنجاح' };
     }
     
-    // Check registered users
+    // Check registered users (regular users only)
     const users = getUsers();
-    const admins = getAdmins();
-    
     const user = users.find(u => u.username === username && u.password === password);
     
     if (!user) {
         return { success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     }
     
-    // Check if admin
-    const isAdminUser = admins.includes(username);
-    
-    // Save auth data
+    // Regular user login (not admin)
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
         username: username,
         loggedIn: true,
-        isAdmin: isAdminUser
+        isAdmin: false
     }));
     
     return { success: true, message: 'تم تسجيل الدخول بنجاح' };
