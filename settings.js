@@ -429,27 +429,7 @@ function handleWorkUpload() {
                 // Try to call the refresh function if available
                 if (typeof window.loadUploadedWorks === 'function') {
                     console.log('Refreshing work display using loadUploadedWorks');
-                    // Remove existing uploaded works first to avoid duplicates
-                    const existingWorks = (homeWorkGrid || workGrid).querySelectorAll('.work-item');
-                    // Only remove works that were added dynamically (those with data-uploaded attribute)
-                    existingWorks.forEach(item => {
-                        if (item.hasAttribute('data-uploaded')) {
-                            item.remove();
-                        }
-                    });
-                    // Mark new items as uploaded
-                    setTimeout(() => {
-                        window.loadUploadedWorks();
-                        // Mark newly added items
-                        const allWorks = (homeWorkGrid || workGrid).querySelectorAll('.work-item');
-                        allWorks.forEach((item, idx) => {
-                            // Mark items that come after the original static items
-                            const staticItems = homeWorkGrid ? 4 : 5; // Number of static items
-                            if (idx >= staticItems) {
-                                item.setAttribute('data-uploaded', 'true');
-                            }
-                        });
-                    }, 100);
+                    window.loadUploadedWorks();
                 } else {
                     // Fallback to page reload
                     console.log('loadUploadedWorks not available, reloading page');
