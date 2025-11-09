@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsContent = document.getElementById('resultsContent');
     const noResults = document.getElementById('noResults');
     const searchNameInput = document.getElementById('searchName');
+    const searchDateInput = document.getElementById('searchDate');
     const autocompleteDropdown = document.getElementById('autocompleteDropdown');
     const sheetDataTable = document.getElementById('sheetDataTable');
     const tableHeader = document.getElementById('tableHeader');
@@ -43,13 +44,16 @@ document.addEventListener('DOMContentLoaded', function() {
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const searchName = searchNameInput ? searchNameInput.value.trim() : '';
-            if (searchName) {
-                console.log('Form submitted, searching for:', searchName);
-                performSearch(searchName, false);
-            } else {
-                errorMessage.textContent = 'يرجى إدخال اسم للبحث';
+            const searchDate = searchDateInput ? searchDateInput.value.trim() : '';
+            
+            if (!searchName && !searchDate) {
+                errorMessage.textContent = 'يرجى إدخال الاسم أو التاريخ للبحث';
                 errorMessage.style.display = 'block';
+                return;
             }
+            
+            console.log('Form submitted, searching for:', { name: searchName, date: searchDate });
+            performSearch(searchName, searchDate, false);
         });
     }
     
@@ -111,12 +115,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.preventDefault();
                     searchNameInput.value = activeItem.textContent.trim();
                     hideAutocomplete();
-                    performSearch(searchNameInput.value.trim(), false);
+                    const searchName = searchNameInput.value.trim();
+                    const searchDate = searchDateInput ? searchDateInput.value.trim() : '';
+                    performSearch(searchName, searchDate, false);
                 } else {
                     e.preventDefault();
                     const searchName = searchNameInput.value.trim();
-                    if (searchName) {
-                        performSearch(searchName, false);
+                    const searchDate = searchDateInput ? searchDateInput.value.trim() : '';
+                    if (searchName || searchDate) {
+                        performSearch(searchName, searchDate, false);
                     }
                 }
             } else if (e.key === 'Escape') {
@@ -181,7 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
             item.addEventListener('click', function() {
                 searchNameInput.value = this.textContent.trim();
                 hideAutocomplete();
-                performSearch(searchNameInput.value.trim(), false);
+                const searchName = searchNameInput.value.trim();
+                const searchDate = searchDateInput ? searchDateInput.value.trim() : '';
+                performSearch(searchName, searchDate, false);
             });
             
             item.addEventListener('mouseenter', function() {
@@ -326,8 +335,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 isLoading = false;
 
                 // If there was a previous search, re-run it
-                if (searchNameInput && searchNameInput.value.trim()) {
-                    performSearch(searchNameInput.value.trim(), true);
+                if (searchNameInput && (searchNameInput.value.trim() || (searchDateInput && searchDateInput.value.trim()))) {
+                    const searchName = searchNameInput.value.trim();
+                    const searchDate = searchDateInput ? searchDateInput.value.trim() : '';
+                    performSearch(searchName, searchDate, true);
                 }
             })
             .catch(error => {
@@ -346,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to perform search
-    function performSearch(searchName, silent = false) {
+    function performSearch(searchName, searchDate, silent = false) {
         // Always re-enable button at start (in case it was disabled)
         if (searchBtn) {
             searchBtn.disabled = false;
@@ -390,16 +401,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            console.log('Starting search for:', searchName);
+            console.log('Starting search for:', { name: searchName, date: searchDate });
             console.log('Total rows in sheet:', rows.length);
 
             // Normalize search name (remove extra spaces, convert to lowercase, handle Arabic text)
-            const normalizedSearchName = searchName.toLowerCase().trim().replace(/\s+/g, ' ');
+            const normalizedSearchName = searchName ? searchName.toLowerCase().trim().replace(/\s+/g, ' ') : '';
+            
+            // Normalize search date - convert to comparable format
+            let normalizedSearchDate = '';
+            if (searchDate) {
+                // If searchDate is in YYYY-MM-DD format, normalize it
+                normalizedSearchDate = searchDate.trim();
+                // Also create alternative formats for comparison
+            }
 
             // Find the header row dynamically - look for row containing "الاسم" (Name)
             let headerRowIndex = -1;
             let dataStartIndex = 0;
             const columnHeaders = {};
+            let nameColumnIndex = 0;
+            let dateColumnIndex = -1;
+            let religionColumnIndex = -1; // الدين column index
             
             // Search for the header row (contains "الاسم")
             for (let i = 0; i < Math.min(20, rows.length); i++) {
@@ -414,17 +436,28 @@ document.addEventListener('DOMContentLoaded', function() {
                             headerRowIndex = i;
                             dataStartIndex = i + 1; // Data starts after header
                             
-                            // Extract column headers
+                            // Extract column headers and find important column indices
                             row.c.forEach((cell, idx) => {
                                 if (cell && cell.v !== null && cell.v !== undefined) {
                                     const headerLabel = String(cell.v).trim();
                                     columnHeaders[idx] = headerLabel || `العمود ${idx + 1}`;
+                                    
+                                    // Find date column (التاريخ)
+                                    if (headerLabel.includes('التاريخ') || headerLabel.includes('تاريخ')) {
+                                        dateColumnIndex = idx;
+                                    }
+                                    // Find religion/debt column (الدين)
+                                    if (headerLabel.includes('الدين') || headerLabel.includes('دين')) {
+                                        religionColumnIndex = idx;
+                                    }
                                 } else {
                                     columnHeaders[idx] = `العمود ${idx + 1}`;
                                 }
                             });
                             console.log('Found header row at index:', headerRowIndex);
                             console.log('Column headers:', columnHeaders);
+                            console.log('Date column index:', dateColumnIndex);
+                            console.log('Religion column index:', religionColumnIndex);
                             break;
                         }
                     }
@@ -452,6 +485,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     columnHeaders[5] = 'السعر';
                     headerRowIndex = 9;
                     dataStartIndex = 10;
+                    // Set default indices
+                    dateColumnIndex = 3; // Assuming column 3 is date
+                    nameColumnIndex = 0; // Column 0 is name
+                    // Try to find religion column in common positions
+                    if (!columnHeaders[5] || columnHeaders[5].includes('السعر') || columnHeaders[5].includes('الدين')) {
+                        religionColumnIndex = 5;
+                    }
+                }
+            }
+            
+            // Fallback: if date column not found, try common positions
+            if (dateColumnIndex < 0) {
+                // Try to find date column by checking common column indices
+                for (let idx = 0; idx < Math.min(10, Object.keys(columnHeaders).length); idx++) {
+                    const header = columnHeaders[idx];
+                    if (header && (header.includes('التاريخ') || header.includes('تاريخ'))) {
+                        dateColumnIndex = idx;
+                        break;
+                    }
+                }
+                // If still not found, assume column 3 might be date
+                if (dateColumnIndex < 0 && columnHeaders[3]) {
+                    dateColumnIndex = 3;
                 }
             }
             
@@ -460,6 +516,33 @@ document.addEventListener('DOMContentLoaded', function() {
             const seenRowIndices = new Set();
             
             console.log('Searching from row index:', dataStartIndex, 'to', rows.length);
+            
+            // Helper function to normalize date for comparison
+            function normalizeDate(dateStr) {
+                if (!dateStr) return '';
+                // Try to parse various date formats
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) {
+                    // If not a valid date, try to extract date parts from string
+                    return dateStr.trim();
+                }
+                // Return in YYYY-MM-DD format for comparison
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            // Helper function to check if dates match
+            function datesMatch(date1, date2) {
+                if (!date1 || !date2) return false;
+                const normalized1 = normalizeDate(date1);
+                const normalized2 = normalizeDate(date2);
+                // Check if one contains the other or they're equal
+                return normalized1 === normalized2 || 
+                       normalized1.includes(normalized2) || 
+                       normalized2.includes(normalized1);
+            }
             
             // Start searching from data rows (skip header and empty rows)
             for (let rowIndex = dataStartIndex; rowIndex < rows.length; rowIndex++) {
@@ -472,43 +555,67 @@ document.addEventListener('DOMContentLoaded', function() {
                     continue; // Skip empty rows
                 }
                 
-                // Check the first column (الاسم - Name) for matches
-                // Column A is index 0
-                const nameCell = row.c[0];
-                if (nameCell && nameCell.v !== null && nameCell.v !== undefined) {
-                    const nameValue = String(nameCell.v).trim();
-                    const nameValueLower = nameValue.toLowerCase().replace(/\s+/g, ' ');
+                // Check the name column (الاسم - Name) for matches
+                const nameCell = row.c[nameColumnIndex];
+                let nameMatches = true;
+                if (normalizedSearchName) {
+                    if (nameCell && nameCell.v !== null && nameCell.v !== undefined) {
+                        const nameValue = String(nameCell.v).trim();
+                        const nameValueLower = nameValue.toLowerCase().replace(/\s+/g, ' ');
+                        
+                        // Skip if this is an empty name or header-like value
+                        if (!nameValue || nameValue.length < 2) {
+                            continue;
+                        }
+                        
+                        // Check if the search name matches (partial or full match)
+                        nameMatches = nameValueLower.includes(normalizedSearchName) || 
+                                     normalizedSearchName.includes(nameValueLower) ||
+                                     nameValueLower.startsWith(normalizedSearchName) ||
+                                     normalizedSearchName.startsWith(nameValueLower);
+                    } else {
+                        nameMatches = false; // No name cell, can't match if name is required
+                    }
+                }
+                
+                // Check the date column for matches
+                let dateMatches = true;
+                if (normalizedSearchDate && dateColumnIndex >= 0) {
+                    const dateCell = row.c[dateColumnIndex];
+                    if (dateCell && dateCell.v !== null && dateCell.v !== undefined) {
+                        const dateValue = String(dateCell.v).trim();
+                        dateMatches = datesMatch(dateValue, normalizedSearchDate);
+                    } else {
+                        dateMatches = false; // No date cell, can't match if date is required
+                    }
+                }
+                
+                // If both name and date match (or at least one is provided and matches)
+                if (nameMatches && dateMatches) {
+                    // Get all data from this row, prioritizing name, date, and religion
+                    const rowData = {};
                     
-                    // Skip if this is an empty name or header-like value
-                    if (!nameValue || nameValue.length < 2) {
-                        continue;
+                    // Always include name
+                    if (nameCell && nameCell.v !== null && nameCell.v !== undefined) {
+                        rowData['الاسم'] = String(nameCell.v).trim();
                     }
                     
-                    // Check if the search name matches (partial or full match)
-                    // More flexible matching
-                    const searchMatches = nameValueLower.includes(normalizedSearchName) || 
-                                         normalizedSearchName.includes(nameValueLower) ||
-                                         nameValueLower.startsWith(normalizedSearchName) ||
-                                         normalizedSearchName.startsWith(nameValueLower);
+                    // Always include date if available
+                    if (dateColumnIndex >= 0) {
+                        const dateCell = row.c[dateColumnIndex];
+                        if (dateCell && dateCell.v !== null && dateCell.v !== undefined) {
+                            rowData['التاريخ'] = String(dateCell.v).trim();
+                        }
+                    }
                     
-                    if (searchMatches) {
-                        // Get all data from this row
-                        const rowData = {};
-                        
-                        // Map columns with proper headers
-                        row.c.forEach((c, idx) => {
-                            const colLabel = columnHeaders[idx] || `العمود ${idx + 1}`;
-                            let cellValue = '';
-                            if (c && c.v !== null && c.v !== undefined) {
-                                cellValue = String(c.v).trim();
-                            }
-                            // Show all columns (even if empty for important ones)
-                            if (cellValue || idx < 6) {
-                                rowData[colLabel] = cellValue;
-                            }
-                        });
-                        
-                        // Calculate total debt from price columns
+                    // Always include religion/debt if available
+                    if (religionColumnIndex >= 0) {
+                        const religionCell = row.c[religionColumnIndex];
+                        if (religionCell && religionCell.v !== null && religionCell.v !== undefined) {
+                            rowData['الدين'] = String(religionCell.v).trim();
+                        }
+                    } else {
+                        // If no religion column found, try to calculate from price columns
                         let totalDebt = 0;
                         let priceFound = false;
                         // Check columns that might contain prices (usually column 4 or 5)
@@ -524,20 +631,36 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             }
                         }
-                        
-                        // If we found a price, add it to the display
+                        // If we found a price, add it as الدين
                         if (priceFound && totalDebt > 0) {
-                            rowData['إجمالي الدين'] = totalDebt.toLocaleString('ar-SA') + ' دينار';
+                            rowData['الدين'] = totalDebt.toLocaleString('ar-SA') + ' دينار';
                         }
-                        
-                        matches.push({
-                            rowIndex: rowIndex,
-                            data: rowData
-                        });
-                        seenRowIndices.add(rowIndex);
-                        
-                        console.log('Match found at row', rowIndex, ':', nameValue);
                     }
+                    
+                    // Add other columns if needed
+                    row.c.forEach((c, idx) => {
+                        const colLabel = columnHeaders[idx] || `العمود ${idx + 1}`;
+                        // Skip if we already added this column
+                        if (rowData[colLabel]) return;
+                        
+                        let cellValue = '';
+                        if (c && c.v !== null && c.v !== undefined) {
+                            cellValue = String(c.v).trim();
+                        }
+                        // Add other non-empty columns
+                        if (cellValue) {
+                            rowData[colLabel] = cellValue;
+                        }
+                    });
+                    
+                    matches.push({
+                        rowIndex: rowIndex,
+                        data: rowData
+                    });
+                    seenRowIndices.add(rowIndex);
+                    
+                    const matchedName = nameCell && nameCell.v ? String(nameCell.v).trim() : 'غير محدد';
+                    console.log('Match found at row', rowIndex, ':', matchedName);
                 }
             }
             
@@ -545,10 +668,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Display results
             if (matches.length > 0) {
-                displaySearchResults(matches, searchName);
+                displaySearchResults(matches, searchName, searchDate);
             } else {
                 showNoResults();
-                console.log('No matches found for:', searchName);
+                console.log('No matches found for:', { name: searchName, date: searchDate });
             }
 
         } catch (error) {
@@ -573,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to display search results
-    function displaySearchResults(matches, searchName) {
+    function displaySearchResults(matches, searchName, searchDate) {
         searchResults.style.display = 'block';
         noResults.style.display = 'none';
         errorMessage.style.display = 'none';
@@ -588,18 +711,36 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `</div>`;
             html += `<div class="result-body">`;
             
-            // Display all fields from the row
-            const hasData = Object.keys(match.data).some(key => match.data[key]);
-            if (hasData) {
-                Object.keys(match.data).forEach(key => {
+            // Prioritize displaying name, date, and religion
+            const priorityFields = ['الاسم', 'التاريخ', 'الدين'];
+            
+            // Display priority fields first
+            priorityFields.forEach(key => {
+                if (match.data[key] !== undefined) {
                     const value = match.data[key];
-                    // Show field even if empty, but highlight non-empty values
                     html += `<div class="result-field">`;
                     html += `<strong class="field-label">${escapeHtml(key)}:</strong>`;
                     html += `<span class="field-value ${value ? '' : 'empty-value'}">${value ? escapeHtml(value) : '(فارغ)'}</span>`;
                     html += `</div>`;
-                });
-            } else {
+                }
+            });
+            
+            // Display other fields
+            Object.keys(match.data).forEach(key => {
+                if (!priorityFields.includes(key)) {
+                    const value = match.data[key];
+                    if (value) {
+                        html += `<div class="result-field">`;
+                        html += `<strong class="field-label">${escapeHtml(key)}:</strong>`;
+                        html += `<span class="field-value">${escapeHtml(value)}</span>`;
+                        html += `</div>`;
+                    }
+                }
+            });
+            
+            // If no data at all
+            const hasData = Object.keys(match.data).some(key => match.data[key]);
+            if (!hasData) {
                 html += `<p class="no-data-in-row">لا توجد بيانات في هذا الصف</p>`;
             }
             

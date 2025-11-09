@@ -29,6 +29,109 @@ body {
     padding: 0 20px;
 }
 
+/* Site Header - Top Banner */
+.site-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+    padding: 1.5rem 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1001;
+    animation: fadeInDown 0.6s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.header-logo {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
+    animation: logoFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    transition: transform 0.3s ease;
+}
+
+.header-logo:hover {
+    transform: scale(1.05) rotate(5deg);
+}
+
+@keyframes logoFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.site-name {
+    color: var(--white);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+    animation: nameFadeIn 1s ease-out 0.3s both;
+}
+
+@keyframes nameFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsive design for header */
+@media (max-width: 768px) {
+    .site-header {
+        padding: 1rem 0;
+    }
+    
+    .header-content {
+        gap: 1rem;
+        flex-direction: column;
+    }
+    
+    .header-logo {
+        height: 60px;
+    }
+    
+    .site-name {
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-logo {
+        height: 50px;
+    }
+    
+    .site-name {
+        font-size: 1.5rem;
+    }
+}
+
 /* Navigation */
 .navbar {
     background: var(--white);
@@ -37,7 +140,7 @@ body {
     top: 0;
     z-index: 1000;
     padding: 1rem 0;
-    animation: slideDown 0.6s ease-out;
+    animation: slideDown 0.8s ease-out 0.2s both;
 }
 
 @keyframes slideDown {

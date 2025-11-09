@@ -3,10 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phonix Printer - البحث عن الدين</title>
+    <title>Phonix Printer - استعلام الدين</title>
+    <link rel="icon" type="image/png" href="logo2.png">
+    <link rel="shortcut icon" type="image/png" href="logo2.png">
+    <link rel="apple-touch-icon" href="logo2.png">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <header class="site-header">
+        <div class="container">
+            <div class="header-content">
+                <img src="logo2.png" alt="Phonix Printer Logo" class="header-logo">
+                <h1 class="site-name">Phonix Printer</h1>
+            </div>
+        </div>
+    </header>
     <nav class="navbar">
         <div class="container">
             <div class="logo">
@@ -21,7 +32,7 @@
                 <li><a href="prices.html">الأسعار</a></li>
                 <li><a href="contact.html">اتصل بنا</a></li>
                 <li><a href="request.html">طلب طباعة</a></li>
-                <li><a href="discussion.html" class="active">البحث عن الدين</a></li>
+                <li><a href="discussion.html" class="active">استعلام الدين</a></li>
             </ul>
             <div class="navbar-social">
                 <a href="https://www.instagram.com/ar.phonex.pr?igsh=MWZtNmN5cTh0bzk1cA==" target="_blank" class="nav-social-link" title="Instagram">
@@ -44,8 +55,8 @@
 
     <section class="page-header">
         <div class="container">
-            <h1>البحث عن الدين</h1>
-            <p>ابحث عن اسم الشخص لمعرفة معلومات الدين</p>
+            <h1>استعلام الدين</h1>
+            <p>ابحث عن اسم الشخص والتاريخ لمعرفة معلومات الدين</p>
         </div>
     </section>
 
@@ -63,11 +74,19 @@
                                     id="searchName" 
                                     name="searchName" 
                                     placeholder="أدخل الاسم الكامل للبحث..." 
-                                    required
                                     autocomplete="off"
                                 >
                                 <div id="autocompleteDropdown" class="autocomplete-dropdown" style="display: none;"></div>
                             </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="searchDate">التاريخ</label>
+                            <input 
+                                type="date" 
+                                id="searchDate" 
+                                name="searchDate" 
+                                placeholder="أدخل التاريخ للبحث..."
+                            >
                         </div>
                         <button type="submit" class="btn-primary" id="searchBtn">
                             <span id="searchBtnText">بحث</span>
