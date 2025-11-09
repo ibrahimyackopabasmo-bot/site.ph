@@ -359,8 +359,11 @@ body {
 .nav-menu {
     display: flex;
     list-style: none;
-    gap: 2rem;
+    gap: 1.5rem;
     animation: fadeInLeft 0.8s ease-out 0.2s both;
+    flex-wrap: nowrap;
+    align-items: center;
+    white-space: nowrap;
 }
 
 @keyframes fadeInLeft {
@@ -376,6 +379,8 @@ body {
 
 .nav-menu li {
     animation: menuItemFadeIn 0.6s ease-out both;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .nav-menu li:nth-child(1) { animation-delay: 0.4s; }
@@ -403,6 +408,8 @@ body {
     border-radius: 5px;
     position: relative;
     overflow: hidden;
+    white-space: nowrap;
+    display: inline-block;
 }
 
 .nav-menu a::before {
@@ -1703,6 +1710,18 @@ footer {
         transition: 0.3s;
         box-shadow: var(--shadow);
         padding: 2rem;
+        gap: 1rem;
+    }
+    
+    .nav-menu li {
+        width: 100%;
+        white-space: normal;
+    }
+    
+    .nav-menu a {
+        white-space: normal;
+        display: block;
+        width: 100%;
     }
 
     .nav-menu.active {
