@@ -2151,6 +2151,11 @@ footer {
     justify-content: center;
 }
 
+.settings-modal.active,
+.settings-modal[style*="flex"] {
+    display: flex !important;
+}
+
 .settings-content {
     background-color: var(--white);
     border-radius: 15px;
