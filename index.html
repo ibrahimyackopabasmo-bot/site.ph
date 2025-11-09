@@ -369,6 +369,8 @@
                             <h3>${work.title || 'عمل بدون عنوان'}</h3>
                             <p>${work.description || 'طباعة عالية الجودة'}</p>
                         `;
+                        workItem.setAttribute('data-uploaded', 'true');
+                        workItem.setAttribute('data-work-id', work.id);
                         workGrid.appendChild(workItem);
                         console.log('Added work item:', work.title);
                     });

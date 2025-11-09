@@ -405,7 +405,7 @@ function handleWorkUpload() {
             uploadSubmitBtn.style.cursor = 'pointer';
         }
         
-        // Close modal after 2.5 seconds and refresh
+        // Close modal after 2.5 seconds and refresh display
         setTimeout(() => {
             const uploadWorkModal = document.getElementById('uploadWorkModal');
             if (uploadWorkModal) {
@@ -420,8 +420,45 @@ function handleWorkUpload() {
                 uploadSuccess.classList.remove('show');
             }
             
-            // Refresh page to show new work in portfolio
-            window.location.reload();
+            // Try to refresh display without page reload
+            // Check if we're on a page with work grid (homepage or mywork page)
+            const homeWorkGrid = document.getElementById('homeWorkGrid');
+            const workGrid = document.getElementById('workGrid');
+            
+            if (homeWorkGrid || workGrid) {
+                // Try to call the refresh function if available
+                if (typeof window.loadUploadedWorks === 'function') {
+                    console.log('Refreshing work display using loadUploadedWorks');
+                    // Remove existing uploaded works first to avoid duplicates
+                    const existingWorks = (homeWorkGrid || workGrid).querySelectorAll('.work-item');
+                    // Only remove works that were added dynamically (those with data-uploaded attribute)
+                    existingWorks.forEach(item => {
+                        if (item.hasAttribute('data-uploaded')) {
+                            item.remove();
+                        }
+                    });
+                    // Mark new items as uploaded
+                    setTimeout(() => {
+                        window.loadUploadedWorks();
+                        // Mark newly added items
+                        const allWorks = (homeWorkGrid || workGrid).querySelectorAll('.work-item');
+                        allWorks.forEach((item, idx) => {
+                            // Mark items that come after the original static items
+                            const staticItems = homeWorkGrid ? 4 : 5; // Number of static items
+                            if (idx >= staticItems) {
+                                item.setAttribute('data-uploaded', 'true');
+                            }
+                        });
+                    }, 100);
+                } else {
+                    // Fallback to page reload
+                    console.log('loadUploadedWorks not available, reloading page');
+                    window.location.reload();
+                }
+            } else {
+                // Not on a portfolio page, just reload
+                window.location.reload();
+            }
         }, 2500);
     };
     

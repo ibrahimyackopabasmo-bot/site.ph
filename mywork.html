@@ -279,7 +279,17 @@
                 console.log('Work grid element:', workGrid);
                 
                 if (works && works.length > 0 && workGrid) {
+                    // Remove duplicate uploaded works first (those with data-uploaded attribute)
+                    const existingUploaded = workGrid.querySelectorAll('.work-item[data-uploaded="true"]');
+                    existingUploaded.forEach(item => item.remove());
+                    
                     works.forEach((work, index) => {
+                        // Skip if work with this ID already exists
+                        const existingWork = workGrid.querySelector(`.work-item[data-work-id="${work.id}"]`);
+                        if (existingWork) {
+                            console.log('Work already exists, skipping:', work.id);
+                            return;
+                        }
                         if (!work || !work.image) {
                             console.warn('Invalid work data at index', index, ':', work);
                             return; // Skip invalid works
@@ -339,6 +349,8 @@
                             <h3>${work.title || 'عمل بدون عنوان'}</h3>
                             <p>${work.description || 'طباعة عالية الجودة'}</p>
                         `;
+                        workItem.setAttribute('data-uploaded', 'true');
+                        workItem.setAttribute('data-work-id', work.id);
                         workGrid.appendChild(workItem);
                         console.log('Added work item:', work.title);
                     });
